@@ -1,4 +1,4 @@
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, replace, fields
 from typing import Iterator
 
 @dataclass(frozen=True)
@@ -29,16 +29,16 @@ class Bets:
 def set_bets(bets: Bets, slot: str, stake: int) -> Bets:
     """
     Returns a new Bets object with the specified bet slot set to the given stake.
+    Auto-scales with Bets dataclass fields.
     """
-    if slot == 'pass_line':
-        return replace(bets, pass_line=stake)
-    elif slot == 'pass_odds':
-        return replace(bets, pass_odds=stake)
-    raise KeyError(f"Unknown bet slot: {slot}")
+    if not hasattr(bets, slot):
+        raise KeyError(f"Unknown bet slot: {slot}")
+    return replace(bets, **{slot: stake})
 
 def iter_bets(bets: Bets) -> Iterator[tuple[str, int]]:
     """
     Iterates over bet slots and their stakes.
+    Auto-scales with Bets dataclass fields.
     """
-    yield ('pass_line', bets.pass_line)
-    yield ('pass_odds', bets.pass_odds)
+    for field in fields(Bets):
+        yield (field.name, getattr(bets, field.name))
