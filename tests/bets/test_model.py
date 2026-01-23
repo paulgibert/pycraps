@@ -36,6 +36,12 @@ def test_iter_bets():
         ('come_8', 0),
         ('come_9', 0),
         ('come_10', 0),
+        ('come_odds_4', 0),
+        ('come_odds_5', 0),
+        ('come_odds_6', 0),
+        ('come_odds_8', 0),
+        ('come_odds_9', 0),
+        ('come_odds_10', 0),
     ]
 
 
@@ -55,4 +61,10 @@ def test_iter_bets_zero():
         ('come_8', 0),
         ('come_9', 0),
         ('come_10', 0),
+        ('come_odds_4', 0),
+        ('come_odds_5', 0),
+        ('come_odds_6', 0),
+        ('come_odds_8', 0),
+        ('come_odds_9', 0),
+        ('come_odds_10', 0),
     ]

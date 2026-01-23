@@ -124,3 +124,36 @@ def test_illegal_change_bet_during_point():
 
     with pytest.raises(IllegalAction):
         step(state, action, roll)
+
+
+def test_come_odds_win():
+    """Test that come odds wins when the come point is hit."""
+    state = make_state(bankroll=980, point=6, come_4=10, pass_line_bet=10)
+    action = Action(bets=ActionBets(pass_line=10, come_odds_4=10))
+    roll = Roll((2, 2))  # 4 (the come point)
+
+    next_state = step(state, action, roll)
+
+    # Come bet wins: $10 + $10 = $20
+    # Come odds wins: $10 + $20 (2:1 odds) = $30
+    # Total payout: $50
+    assert next_state.bankroll == 1020  # 980 - 10 (odds) + 50 (payout)
+    assert next_state.bets.come_4 == 0  # Come bet resolved
+    assert next_state.bets.come_odds_4 == 0  # Come odds resolved
+
+
+def test_come_odds_seven_out():
+    """Test that come odds loses on seven-out."""
+    state = make_state(bankroll=980, point=6, come_4=10, pass_line_bet=10, pass_odds_bet=20)
+    action = Action(bets=ActionBets(pass_line=10, pass_odds=20, come_odds_4=10))
+    roll = Roll((3, 4))  # 7 (seven-out)
+
+    next_state = step(state, action, roll)
+
+    # Everything loses on seven-out
+    assert next_state.bankroll == 970  # 980 - 10 (come odds)
+    assert next_state.bets.pass_line == 0
+    assert next_state.bets.pass_odds == 0
+    assert next_state.bets.come_4 == 0
+    assert next_state.bets.come_odds_4 == 0
+    assert next_state.point is None  # Point cleared

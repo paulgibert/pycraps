@@ -1,11 +1,16 @@
-from dataclasses import replace
+from dataclasses import replace, fields
 from craps.state import TableState
 from craps.dice import Roll
 from craps.action import Action
 from craps.rules.phase import update_phase
 from craps.rules.settlement import settle_bets
 from craps.rules.legality import validate_action
-from craps.bets.model import StateBets
+from craps.bets.model import ActionBets
+
+# Maps ActionBets field names to StateBets field names (only exceptions)
+ACTION_TO_STATE_MAPPING = {
+    'come_bet': 'come_traveling',
+}
 
 def _apply_action(state: TableState, action: Action) -> TableState:
     """
@@ -14,22 +19,25 @@ def _apply_action(state: TableState, action: Action) -> TableState:
     """
     validate_action(state, action.bets)
 
-    # Calculate bankroll change and build new state bets
+    # Calculate bankroll change and build state bet updates
     new_bankroll = state.bankroll
+    state_bet_updates = {}
 
-    # Update player-controlled bets
-    new_bankroll -= (action.bets.pass_line - state.bets.pass_line)
-    new_bankroll -= (action.bets.pass_odds - state.bets.pass_odds)
-    new_bankroll -= (action.bets.come_bet - state.bets.come_traveling)
+    for field in fields(ActionBets):
+        action_field = field.name
+        state_field = ACTION_TO_STATE_MAPPING.get(action_field, action_field)
 
-    # Merge action bets into state bets (preserving engine-managed bets)
-    new_state_bets = replace(
-        state.bets,
-        pass_line=action.bets.pass_line,
-        pass_odds=action.bets.pass_odds,
-        come_traveling=action.bets.come_bet,
-        # come_4, come_5, etc. are preserved from state (engine-managed)
-    )
+        action_value = getattr(action.bets, action_field)
+        state_value = getattr(state.bets, state_field)
+
+        # Deduct the change from bankroll
+        new_bankroll -= (action_value - state_value)
+
+        # Track the update for state bets
+        state_bet_updates[state_field] = action_value
+
+    # Merge action bets into state bets (preserving engine-managed come_N bets)
+    new_state_bets = replace(state.bets, **state_bet_updates)
 
     return replace(state, bets=new_state_bets, bankroll=new_bankroll, is_terminal=action.leave)
 

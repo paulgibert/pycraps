@@ -7,9 +7,20 @@ class ActionBets:
     Represents bet amounts controlled by the player in an Action.
     These are the bets the player can directly set/modify.
     """
+    # Pass line bets
     pass_line: int = 0
     pass_odds: int = 0
+
+    # Come bets
     come_bet: int = 0  # Amount to place as traveling come bet
+    come_odds_4: int = 0
+    come_odds_5: int = 0
+    come_odds_6: int = 0
+    come_odds_8: int = 0
+    come_odds_9: int = 0
+    come_odds_10: int = 0
+
+    # Future: Don't pass/come
     # dont_pass: int = 0
     # dont_pass_odds: int = 0
 
@@ -20,25 +31,35 @@ class StateBets:
     Represents the full bet state on the table, including engine-managed bets.
     This includes both player-controlled and engine-established bets.
     """
+    # Pass line bets
     pass_line: int = 0
     pass_odds: int = 0
-    come_traveling: int = 0  # Engine-managed: traveling come bet
-    come_4: int = 0          # Engine-managed: established come bets
+
+    # Come bets (engine-managed)
+    come_traveling: int = 0  # Traveling come bet
+    come_4: int = 0          # Established come bets
     come_5: int = 0
     come_6: int = 0
     come_8: int = 0
     come_9: int = 0
     come_10: int = 0
+
+    # Come odds
+    come_odds_4: int = 0
+    come_odds_5: int = 0
+    come_odds_6: int = 0
+    come_odds_8: int = 0
+    come_odds_9: int = 0
+    come_odds_10: int = 0
+
+    # Future: Don't pass/come
     # dont_pass: int = 0
     # dont_pass_odds: int = 0
 
-    # come_odds: Dict[int, int]
-    # dont_come_odds: Dict[int, int]
-
+    # Future: Place, buy, lay, field, hardways, props
     # place: Dict[int, int]         # 4,5,6,8,9,10
     # buy: Dict[int, int]
     # lay: Dict[int, int]
-
     # field: int
     # hardways: Dict[int, int]      # 4,6,8,10
     # props: Dict[str, int]
