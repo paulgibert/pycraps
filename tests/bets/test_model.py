@@ -22,17 +22,17 @@ def test_set_bets_unknown_slot():
 
 def test_iter_bets():
     """Test that iter_bets yields correct tuples."""
-    bets = Bets(pass_line=10)
+    bets = Bets(pass_line=10, pass_odds=5)
 
     result = list(iter_bets(bets))
 
-    assert result == [('pass_line', 10)]
+    assert result == [('pass_line', 10), ('pass_odds', 5)]
 
 
 def test_iter_bets_zero():
     """Test that iter_bets yields zero stakes."""
-    bets = Bets(pass_line=0)
+    bets = Bets()  # All defaults to zero
 
     result = list(iter_bets(bets))
 
-    assert result == [('pass_line', 0)]
+    assert result == [('pass_line', 0), ('pass_odds', 0)]

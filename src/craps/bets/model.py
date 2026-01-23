@@ -6,10 +6,10 @@ class Bets:
     """
     Represents all bet amounts on the table.
     """
-    pass_line: int
+    pass_line: int = 0
+    pass_odds: int = 0
     # dont_pass: int
 
-    # pass_odds: int
     # dont_pass_odds: int
 
     # come: Dict[int, int]          # keyed by number
@@ -32,6 +32,8 @@ def set_bets(bets: Bets, slot: str, stake: int) -> Bets:
     """
     if slot == 'pass_line':
         return replace(bets, pass_line=stake)
+    elif slot == 'pass_odds':
+        return replace(bets, pass_odds=stake)
     raise KeyError(f"Unknown bet slot: {slot}")
 
 def iter_bets(bets: Bets) -> Iterator[tuple[str, int]]:
@@ -39,3 +41,4 @@ def iter_bets(bets: Bets) -> Iterator[tuple[str, int]]:
     Iterates over bet slots and their stakes.
     """
     yield ('pass_line', bets.pass_line)
+    yield ('pass_odds', bets.pass_odds)

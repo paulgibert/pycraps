@@ -16,3 +16,4 @@ class TableState:
     is_terminal: bool
     table_min: int
     table_max: int
+    max_odds: int
