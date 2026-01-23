@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
-from craps.bets.model import Bets
+from craps.bets.model import StateBets
 from craps.dice import Roll
 
 @dataclass(frozen=True)
@@ -11,7 +11,7 @@ class TableState:
     bankroll: int
     roll_count: int
     point: Optional[int]
-    bets: Bets
+    bets: StateBets
     last_roll: Optional[Roll]
     is_terminal: bool
     table_min: int

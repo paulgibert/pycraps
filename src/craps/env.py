@@ -4,22 +4,34 @@ from craps.dice import Roll
 from craps.action import Action
 from craps.rules.phase import update_phase
 from craps.rules.settlement import settle_bets
-from craps.rules.legality import validate_target
-from craps.bets.model import iter_bets
+from craps.rules.legality import validate_action
+from craps.bets.model import StateBets
 
 def _apply_action(state: TableState, action: Action) -> TableState:
     """
     Applies action to state. Raises IllegalAction if not allowed.
+    Merges player-controlled ActionBets into full StateBets.
     """
-    validate_target(state, action.bets)
+    validate_action(state, action.bets)
 
-    # Calculate bankroll change from bet adjustments
+    # Calculate bankroll change and build new state bets
     new_bankroll = state.bankroll
-    for slot, new_stake in iter_bets(action.bets):
-        current_stake = getattr(state.bets, slot)
-        new_bankroll -= (new_stake - current_stake)
 
-    return replace(state, bets=action.bets, bankroll=new_bankroll, is_terminal=action.leave)
+    # Update player-controlled bets
+    new_bankroll -= (action.bets.pass_line - state.bets.pass_line)
+    new_bankroll -= (action.bets.pass_odds - state.bets.pass_odds)
+    new_bankroll -= (action.bets.come_bet - state.bets.come_traveling)
+
+    # Merge action bets into state bets (preserving engine-managed bets)
+    new_state_bets = replace(
+        state.bets,
+        pass_line=action.bets.pass_line,
+        pass_odds=action.bets.pass_odds,
+        come_traveling=action.bets.come_bet,
+        # come_4, come_5, etc. are preserved from state (engine-managed)
+    )
+
+    return replace(state, bets=new_state_bets, bankroll=new_bankroll, is_terminal=action.leave)
 
 def step(state: TableState, action: Action, roll: Roll) -> TableState:
     """

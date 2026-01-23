@@ -2,18 +2,35 @@ from dataclasses import dataclass, replace, fields
 from typing import Iterator
 
 @dataclass(frozen=True)
-class Bets:
+class ActionBets:
     """
-    Represents all bet amounts on the table.
+    Represents bet amounts controlled by the player in an Action.
+    These are the bets the player can directly set/modify.
     """
     pass_line: int = 0
     pass_odds: int = 0
-    # dont_pass: int
+    come_bet: int = 0  # Amount to place as traveling come bet
+    # dont_pass: int = 0
+    # dont_pass_odds: int = 0
 
-    # dont_pass_odds: int
 
-    # come: Dict[int, int]          # keyed by number
-    # dont_come: Dict[int, int]
+@dataclass(frozen=True)
+class StateBets:
+    """
+    Represents the full bet state on the table, including engine-managed bets.
+    This includes both player-controlled and engine-established bets.
+    """
+    pass_line: int = 0
+    pass_odds: int = 0
+    come_traveling: int = 0  # Engine-managed: traveling come bet
+    come_4: int = 0          # Engine-managed: established come bets
+    come_5: int = 0
+    come_6: int = 0
+    come_8: int = 0
+    come_9: int = 0
+    come_10: int = 0
+    # dont_pass: int = 0
+    # dont_pass_odds: int = 0
 
     # come_odds: Dict[int, int]
     # dont_come_odds: Dict[int, int]
@@ -26,19 +43,19 @@ class Bets:
     # hardways: Dict[int, int]      # 4,6,8,10
     # props: Dict[str, int]
 
-def set_bets(bets: Bets, slot: str, stake: int) -> Bets:
+def set_bets(bets: StateBets, slot: str, stake: int) -> StateBets:
     """
-    Returns a new Bets object with the specified bet slot set to the given stake.
-    Auto-scales with Bets dataclass fields.
+    Returns a new StateBets object with the specified bet slot set to the given stake.
+    Auto-scales with StateBets dataclass fields.
     """
     if not hasattr(bets, slot):
         raise KeyError(f"Unknown bet slot: {slot}")
     return replace(bets, **{slot: stake})
 
-def iter_bets(bets: Bets) -> Iterator[tuple[str, int]]:
+def iter_bets(bets: StateBets) -> Iterator[tuple[str, int]]:
     """
     Iterates over bet slots and their stakes.
-    Auto-scales with Bets dataclass fields.
+    Auto-scales with StateBets dataclass fields.
     """
-    for field in fields(Bets):
+    for field in fields(StateBets):
         yield (field.name, getattr(bets, field.name))
