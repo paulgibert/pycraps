@@ -36,6 +36,9 @@ class ActionBets:
     buy_9: int = 0
     buy_10: int = 0
 
+    # Field bet
+    field: int = 0
+
     # Future: Don't pass/come
     # dont_pass: int = 0
     # dont_pass_odds: int = 0
@@ -84,13 +87,15 @@ class StateBets:
     buy_9: int = 0
     buy_10: int = 0
 
+    # Field bet
+    field: int = 0
+
     # Future: Don't pass/come
     # dont_pass: int = 0
     # dont_pass_odds: int = 0
 
-    # Future: Lay, field, hardways, props
+    # Future: Lay, hardways, props
     # lay: Dict[int, int]
-    # field: int
     # hardways: Dict[int, int]      # 4,6,8,10
     # props: Dict[str, int]
 

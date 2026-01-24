@@ -54,6 +54,7 @@ def test_iter_bets():
         ('buy_8', 0),
         ('buy_9', 0),
         ('buy_10', 0),
+        ('field', 0),
     ]
 
 
@@ -91,4 +92,5 @@ def test_iter_bets_zero():
         ('buy_8', 0),
         ('buy_9', 0),
         ('buy_10', 0),
+        ('field', 0),
     ]

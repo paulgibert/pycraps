@@ -4,6 +4,7 @@ from craps.bets.come_bet import ComeTraveling, Come4, Come5, Come6, Come8, Come9
 from craps.bets.come_odds import ComeOdds
 from craps.bets.place_bets import PlaceBet
 from craps.bets.buy_bets import BuyBet
+from craps.bets.field_bet import FieldBet
 
 # Register the same instance under both come_bet (ActionBets) and come_traveling (StateBets)
 come_bet_type = ComeTraveling()
@@ -46,4 +47,7 @@ BET_REGISTRY = {
     'buy_8': BuyBet(8),
     'buy_9': BuyBet(9),
     'buy_10': BuyBet(10),
+
+    # Field bet
+    'field': FieldBet(),
 }
