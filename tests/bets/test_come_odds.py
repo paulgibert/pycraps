@@ -5,9 +5,7 @@ from craps.exceptions import IllegalAction
 from conftest import make_state
 
 
-# =============================================================================
-# Settlement Tests
-# =============================================================================
+# Tests for settle() method
 
 @pytest.mark.parametrize("come_point,roll,expected_payout", [
     # Point 4 wins with 2:1 odds
@@ -89,9 +87,7 @@ def test_come_odds_zero_stake():
     assert result.remaining_stake == 0
 
 
-# =============================================================================
-# Validation Tests
-# =============================================================================
+# Tests for validate() method
 
 @pytest.mark.parametrize("come_point", [4, 5, 6, 8, 9, 10])
 def test_valid_come_odds(come_point):
@@ -140,9 +136,7 @@ def test_come_odds_exceeds_bankroll():
         bet.validate(state, 100)
 
 
-# =============================================================================
-# Increment Validation Tests
-# =============================================================================
+# Tests for increment validation
 
 @pytest.mark.parametrize("come_point,valid_amount", [
     (5, 10),   # Even amount
@@ -227,9 +221,7 @@ def test_come_odds_4_10_any_amount_valid(come_point):
     bet.validate(state, 99)
 
 
-# =============================================================================
-# Edge Cases
-# =============================================================================
+# Tests for edge cases
 
 def test_come_odds_zero_stake_validation():
     """Test that zero stake always passes validation."""

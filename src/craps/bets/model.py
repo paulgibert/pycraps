@@ -20,6 +20,22 @@ class ActionBets:
     come_odds_9: int = 0
     come_odds_10: int = 0
 
+    # Place bets
+    place_4: int = 0
+    place_5: int = 0
+    place_6: int = 0
+    place_8: int = 0
+    place_9: int = 0
+    place_10: int = 0
+
+    # Buy bets
+    buy_4: int = 0
+    buy_5: int = 0
+    buy_6: int = 0
+    buy_8: int = 0
+    buy_9: int = 0
+    buy_10: int = 0
+
     # Future: Don't pass/come
     # dont_pass: int = 0
     # dont_pass_odds: int = 0
@@ -52,13 +68,27 @@ class StateBets:
     come_odds_9: int = 0
     come_odds_10: int = 0
 
+    # Place bets
+    place_4: int = 0
+    place_5: int = 0
+    place_6: int = 0
+    place_8: int = 0
+    place_9: int = 0
+    place_10: int = 0
+
+    # Buy bets
+    buy_4: int = 0
+    buy_5: int = 0
+    buy_6: int = 0
+    buy_8: int = 0
+    buy_9: int = 0
+    buy_10: int = 0
+
     # Future: Don't pass/come
     # dont_pass: int = 0
     # dont_pass_odds: int = 0
 
-    # Future: Place, buy, lay, field, hardways, props
-    # place: Dict[int, int]         # 4,5,6,8,9,10
-    # buy: Dict[int, int]
+    # Future: Lay, field, hardways, props
     # lay: Dict[int, int]
     # field: int
     # hardways: Dict[int, int]      # 4,6,8,10
