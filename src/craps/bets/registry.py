@@ -5,6 +5,8 @@ from craps.bets.come_odds import ComeOdds
 from craps.bets.place_bets import PlaceBet
 from craps.bets.buy_bets import BuyBet
 from craps.bets.field_bet import FieldBet
+from craps.bets.hardways import HardwayBet
+from craps.bets.props import AnySeven, AnyCraps, AceDeuce, Aces, Boxcars, YoLeven, Horn, CAndE
 
 # Register the same instance under both come_bet (ActionBets) and come_traveling (StateBets)
 come_bet_type = ComeTraveling()
@@ -50,4 +52,22 @@ BET_REGISTRY = {
 
     # Field bet
     'field': FieldBet(),
+
+    # Hardway bets
+    'hard_4': HardwayBet(4),
+    'hard_6': HardwayBet(6),
+    'hard_8': HardwayBet(8),
+    'hard_10': HardwayBet(10),
+
+    # One-roll proposition bets
+    'any_seven': AnySeven(),
+    'any_craps': AnyCraps(),
+    'ace_deuce': AceDeuce(),
+    'aces': Aces(),
+    'boxcars': Boxcars(),
+    'yo_leven': YoLeven(),
+
+    # Combination proposition bets
+    'horn': Horn(),
+    'c_and_e': CAndE(),
 }

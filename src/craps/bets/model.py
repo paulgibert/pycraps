@@ -39,6 +39,24 @@ class ActionBets:
     # Field bet
     field: int = 0
 
+    # Hardway bets
+    hard_4: int = 0
+    hard_6: int = 0
+    hard_8: int = 0
+    hard_10: int = 0
+
+    # One-roll proposition bets
+    any_seven: int = 0
+    any_craps: int = 0
+    ace_deuce: int = 0    # 3
+    aces: int = 0          # 2
+    boxcars: int = 0       # 12
+    yo_leven: int = 0      # 11
+
+    # Combination proposition bets
+    horn: int = 0          # Splits 4 ways on 2, 3, 11, 12
+    c_and_e: int = 0       # Splits 2 ways on Any Craps and 11
+
     # Future: Don't pass/come
     # dont_pass: int = 0
     # dont_pass_odds: int = 0
@@ -89,6 +107,24 @@ class StateBets:
 
     # Field bet
     field: int = 0
+
+    # Hardway bets
+    hard_4: int = 0
+    hard_6: int = 0
+    hard_8: int = 0
+    hard_10: int = 0
+
+    # One-roll proposition bets
+    any_seven: int = 0
+    any_craps: int = 0
+    ace_deuce: int = 0    # 3
+    aces: int = 0          # 2
+    boxcars: int = 0       # 12
+    yo_leven: int = 0      # 11
+
+    # Combination proposition bets
+    horn: int = 0          # Splits 4 ways on 2, 3, 11, 12
+    c_and_e: int = 0       # Splits 2 ways on Any Craps and 11
 
     # Future: Don't pass/come
     # dont_pass: int = 0

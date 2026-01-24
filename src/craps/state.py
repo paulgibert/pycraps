@@ -17,3 +17,4 @@ class TableState:
     table_min: int
     table_max: int
     max_odds: int
+    prop_min: int

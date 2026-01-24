@@ -22,7 +22,8 @@ def make_state(
     come_odds_10=0,
     table_min=5,
     table_max=1000,
-    max_odds=10
+    max_odds=10,
+    prop_min=1
 ):
     """Helper to create a TableState."""
     bets_kwargs = {}
@@ -67,4 +68,5 @@ def make_state(
         table_min=table_min,
         table_max=table_max,
         max_odds=max_odds,
+        prop_min=prop_min,
     )
