@@ -9,25 +9,25 @@ from conftest import make_state
 # Tests for settle() method
 
 @pytest.mark.parametrize("number,dice,expected_payout", [
-    # 4/10 pays 9:5 ($5 bet wins $9)
-    (4, (1, 3), 5 + 9),   # Stake + winnings
-    (4, (2, 2), 5 + 9),
-    (10, (4, 6), 5 + 9),
-    (10, (5, 5), 5 + 9),
+    # 4/10 pays 9:5 ($5 bet wins $9, stake stays on table)
+    (4, (1, 3), 9),
+    (4, (2, 2), 9),
+    (10, (4, 6), 9),
+    (10, (5, 5), 9),
 
-    # 5/9 pays 7:5 ($5 bet wins $7)
-    (5, (1, 4), 5 + 7),
-    (5, (2, 3), 5 + 7),
-    (9, (3, 6), 5 + 7),
-    (9, (4, 5), 5 + 7),
+    # 5/9 pays 7:5 ($5 bet wins $7, stake stays on table)
+    (5, (1, 4), 7),
+    (5, (2, 3), 7),
+    (9, (3, 6), 7),
+    (9, (4, 5), 7),
 
-    # 6/8 pays 7:6 ($6 bet wins $7)
-    (6, (1, 5), 6 + 7),
-    (6, (2, 4), 6 + 7),
-    (6, (3, 3), 6 + 7),
-    (8, (2, 6), 6 + 7),
-    (8, (3, 5), 6 + 7),
-    (8, (4, 4), 6 + 7),
+    # 6/8 pays 7:6 ($6 bet wins $7, stake stays on table)
+    (6, (1, 5), 7),
+    (6, (2, 4), 7),
+    (6, (3, 3), 7),
+    (8, (2, 6), 7),
+    (8, (3, 5), 7),
+    (8, (4, 4), 7),
 ])
 def test_place_bet_wins_on_number(number, dice, expected_payout):
     """Test that place bet wins with correct payout when number is rolled."""
@@ -283,7 +283,7 @@ def test_place_4_10_payout():
 
     result = bet.settle(state, 5, roll)
 
-    assert result.bankroll_delta == 14  # $5 stake + $9 winnings
+    assert result.bankroll_delta == 9  # $9 winnings (stake stays on table)
 
 
 def test_place_5_9_payout():
@@ -294,7 +294,7 @@ def test_place_5_9_payout():
 
     result = bet.settle(state, 5, roll)
 
-    assert result.bankroll_delta == 12  # $5 stake + $7 winnings
+    assert result.bankroll_delta == 7  # $7 winnings (stake stays on table)
 
 
 def test_place_6_8_payout():
@@ -305,7 +305,7 @@ def test_place_6_8_payout():
 
     result = bet.settle(state, 6, roll)
 
-    assert result.bankroll_delta == 13  # $6 stake + $7 winnings
+    assert result.bankroll_delta == 7  # $7 winnings (stake stays on table)
 
 
 # Edge case tests

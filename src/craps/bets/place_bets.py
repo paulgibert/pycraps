@@ -33,7 +33,7 @@ class PlaceBet(BetType):
         # Win if number is rolled
         if roll.total() == self.number:
             winnings = self._calculate_winnings(stake)
-            return BetResult(stake + winnings, stake)  # Stay on table
+            return BetResult(winnings, stake)  # Winnings paid, bet stays on table
 
         # Lose on seven-out
         elif roll.total() == 7:
