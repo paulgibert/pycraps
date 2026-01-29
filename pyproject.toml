@@ -1,6 +1,9 @@
 [project]
 name = "pycraps"
 version = "0.1.0"
+dependencies = [
+    "gymnasium>=1.2.3",
+]
 
 [project.optional-dependencies]
 dev = ["pytest", "hypothesis"]

@@ -1,89 +1,99 @@
 import math
-from craps.bets.protocol import BetType, BetResult
-from craps.state import TableState
+from dataclasses import dataclass
+from typing import ClassVar, TYPE_CHECKING
+
 from craps.dice import Roll
-from craps.exceptions import IllegalAction
+from craps.bets.model import Bet, BetResult
+from craps.exceptions import InsufficientFunds
+
+if TYPE_CHECKING:
+    from craps.state import TableState
 
 
-class BuyBet(BetType):
+@dataclass(frozen=True)
+class BuyBet(Bet):
     """
-    Buy bet on a specific number (4, 5, 6, 8, 9, 10).
-
-    Rules:
-    - OFF during come-out roll (no action when state.point is None)
-    - Wins when the number is rolled (stays on table after win)
-    - Loses on seven-out
-    - Pays true odds: 2:1 for 4/10, 3:2 for 5/9, 6:5 for 6/8
-    - Charges 5% commission on win only (modern approach)
-    - Commission is 5% of bet amount, rounded up to nearest dollar
+    Base class for buy bets. Like place bets but pay true odds minus 5% commission.
+    OFF during come-out, wins on number, loses on 7.
     """
+    number: ClassVar[int]
 
-    def __init__(self, number: int):
-        if number not in (4, 5, 6, 8, 9, 10):
-            raise ValueError(f"Invalid buy number: {number}")
-        self.number = number
-
-    def settle(self, state: TableState, stake: int, roll: Roll) -> BetResult:
-        """Settle buy bet for a given roll."""
-        if stake == 0:
+    def settle(self, state: 'TableState', roll: Roll) -> BetResult:
+        if self.stake == 0:
             return BetResult(0, 0)
-
-        # OFF during come-out roll
+        # OFF during come-out
         if state.point is None:
-            return BetResult(0, stake)
-
-        # Win if number is rolled
+            return BetResult(0, self.stake)
         if roll.total() == self.number:
-            # Calculate true odds payout
-            if self.number in (4, 10):
-                winnings = stake * 2  # 2:1
-            elif self.number in (5, 9):
-                winnings = stake * 3 // 2  # 3:2
-            elif self.number in (6, 8):
-                winnings = stake * 6 // 5  # 6:5
-            else:
-                raise ValueError(f"Invalid buy number: {self.number}")
-
-            # Calculate 5% commission on bet amount, round up to nearest dollar
-            commission = math.ceil(stake * 0.05)
-
-            # Net payout = winnings - commission (stake stays on table)
-            net_payout = winnings - commission
-
-            return BetResult(net_payout, stake)  # Stay on table
-
-        # Lose on seven-out
+            winnings = self._calculate_winnings()
+            return BetResult(winnings, self.stake)  # Bet stays on table
         elif roll.total() == 7:
             return BetResult(0, 0)
-
-        # No action on other numbers
         else:
-            return BetResult(0, stake)
+            return BetResult(0, self.stake)
 
-    def validate(self, state: TableState, stake: int) -> None:
-        """Validate buy bet amount."""
-        # Negative check
-        if stake < 0:
-            raise IllegalAction("Buy bet amount cannot be negative")
-
-        # Zero is valid (removing bet)
-        if stake == 0:
-            return
-
-        # Bankroll check
-        if stake > state.bankroll:
-            raise IllegalAction("Buy bet exceeds bankroll")
-
-        # Table limits
-        if stake < state.table_min:
-            raise IllegalAction(f"Buy bet below table minimum ${state.table_min}")
-        if stake > state.table_max:
-            raise IllegalAction(f"Buy bet exceeds table maximum ${state.table_max}")
-
-        # Increment validation to ensure whole dollar payouts
-        if self.number in (5, 9):
-            if stake % 2 != 0:
-                raise IllegalAction(f"Buy bet on {self.number} must be even amounts for 3:2 payout")
+    def _calculate_winnings(self) -> int:
+        """True odds minus 5% commission: 2:1 for 4/10, 3:2 for 5/9, 6:5 for 6/8."""
+        if self.number in (4, 10):
+            gross = self.stake * 2
+        elif self.number in (5, 9):
+            gross = self.stake * 3 // 2
         elif self.number in (6, 8):
-            if stake % 5 != 0:
-                raise IllegalAction(f"Buy bet on {self.number} must be multiples of $5 for 6:5 payout")
+            gross = self.stake * 6 // 5
+        else:
+            return 0
+        commission = math.ceil(self.stake * 0.05)
+        return gross - commission
+
+    def validate(self, state: 'TableState') -> None:
+        if self.stake < 0:
+            raise InsufficientFunds("Buy bet cannot be negative")
+        if self.stake == 0:
+            return
+        if self.stake > state.bankroll:
+            raise InsufficientFunds("Buy bet exceeds bankroll")
+        if self.stake < state.table_min:
+            raise InsufficientFunds(f"Buy bet below table minimum ${state.table_min}")
+        if self.stake > state.table_max:
+            raise InsufficientFunds(f"Buy bet exceeds table maximum ${state.table_max}")
+        # Increment validation for clean payouts
+        if self.number in (5, 9) and self.stake % 2 != 0:
+            raise InsufficientFunds(f"Buy bet on {self.number} must be even amounts for 3:2 payout")
+        elif self.number in (6, 8) and self.stake % 5 != 0:
+            raise InsufficientFunds(f"Buy bet on {self.number} must be multiples of $5 for 6:5 payout")
+
+
+@dataclass(frozen=True)
+class Buy4(BuyBet):
+    number: ClassVar[int] = 4
+    increment: ClassVar[tuple[int, ...]] = (1,)
+
+
+@dataclass(frozen=True)
+class Buy5(BuyBet):
+    number: ClassVar[int] = 5
+    increment: ClassVar[tuple[int, ...]] = (2,)
+
+
+@dataclass(frozen=True)
+class Buy6(BuyBet):
+    number: ClassVar[int] = 6
+    increment: ClassVar[tuple[int, ...]] = (5,)
+
+
+@dataclass(frozen=True)
+class Buy8(BuyBet):
+    number: ClassVar[int] = 8
+    increment: ClassVar[tuple[int, ...]] = (5,)
+
+
+@dataclass(frozen=True)
+class Buy9(BuyBet):
+    number: ClassVar[int] = 9
+    increment: ClassVar[tuple[int, ...]] = (2,)
+
+
+@dataclass(frozen=True)
+class Buy10(BuyBet):
+    number: ClassVar[int] = 10
+    increment: ClassVar[tuple[int, ...]] = (1,)

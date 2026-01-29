@@ -1,0 +1,6 @@
+POINTS = (4, 5, 6, 8, 9, 10)
+HARDWAYS = (4, 6, 8, 10)
+HORN = (2, 3, 11, 12)
+NATURAL_WINNERS = (7, 11)
+CRAPS = (2, 3, 12)
+SEVEN_OUT = 7

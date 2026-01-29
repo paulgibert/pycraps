@@ -1,8 +1,15 @@
 import pytest
-from craps.bets.come_odds import ComeOdds
+from craps.bets.come_odds import ComeOdds4, ComeOdds5, ComeOdds6, ComeOdds8, ComeOdds9, ComeOdds10
 from craps.dice import Roll
-from craps.exceptions import IllegalAction
+from craps.exceptions import InsufficientFunds
 from conftest import make_state
+
+
+# Helper to get correct bet class by come point
+COME_ODDS_CLASSES = {
+    4: ComeOdds4, 5: ComeOdds5, 6: ComeOdds6,
+    8: ComeOdds8, 9: ComeOdds9, 10: ComeOdds10
+}
 
 
 # Tests for settle() method
@@ -35,9 +42,9 @@ from conftest import make_state
 def test_come_odds_win(come_point, roll, expected_payout):
     """Test that come odds wins when the come point is hit."""
     state = make_state(bankroll=1000, point=6, **{f'come_{come_point}': 10})
-    bet = ComeOdds(come_point)
+    bet = COME_ODDS_CLASSES[come_point](stake=10)
 
-    result = bet.settle(state, 10, roll)
+    result = bet.settle(state, roll)
 
     assert result.bankroll_delta == expected_payout
     assert result.remaining_stake == 0
@@ -47,10 +54,10 @@ def test_come_odds_win(come_point, roll, expected_payout):
 def test_come_odds_seven_out(come_point):
     """Test that come odds loses on seven-out."""
     state = make_state(bankroll=1000, point=6, **{f'come_{come_point}': 10})
-    bet = ComeOdds(come_point)
+    bet = COME_ODDS_CLASSES[come_point](stake=10)
     roll = Roll((3, 4))  # 7
 
-    result = bet.settle(state, 10, roll)
+    result = bet.settle(state, roll)
 
     assert result.bankroll_delta == 0
     assert result.remaining_stake == 0
@@ -67,9 +74,9 @@ def test_come_odds_seven_out(come_point):
 def test_come_odds_stays(come_point, other_roll):
     """Test that come odds stays on other rolls."""
     state = make_state(bankroll=1000, point=6, **{f'come_{come_point}': 10})
-    bet = ComeOdds(come_point)
+    bet = COME_ODDS_CLASSES[come_point](stake=10)
 
-    result = bet.settle(state, 10, other_roll)
+    result = bet.settle(state, other_roll)
 
     assert result.bankroll_delta == 0
     assert result.remaining_stake == 10
@@ -78,10 +85,10 @@ def test_come_odds_stays(come_point, other_roll):
 def test_come_odds_zero_stake():
     """Test that zero stake returns zero result."""
     state = make_state(bankroll=1000, point=6, come_4=10)
-    bet = ComeOdds(4)
+    bet = ComeOdds4(stake=0)
     roll = Roll((2, 2))
 
-    result = bet.settle(state, 0, roll)
+    result = bet.settle(state, roll)
 
     assert result.bankroll_delta == 0
     assert result.remaining_stake == 0
@@ -93,47 +100,47 @@ def test_come_odds_zero_stake():
 def test_valid_come_odds(come_point):
     """Test that valid come odds passes validation."""
     state = make_state(bankroll=1000, point=6, **{f'come_{come_point}': 10})
-    bet = ComeOdds(come_point)
+    bet = COME_ODDS_CLASSES[come_point](stake=10)
 
     # Should not raise
-    bet.validate(state, 10)
+    bet.validate(state)
 
 
 def test_come_odds_negative():
     """Test that negative odds raises IllegalAction."""
     state = make_state(bankroll=1000, point=6, come_4=10)
-    bet = ComeOdds(4)
+    bet = ComeOdds4(stake=-10)
 
-    with pytest.raises(IllegalAction, match="cannot be negative"):
-        bet.validate(state, -10)
+    with pytest.raises(InsufficientFunds, match="cannot be negative"):
+        bet.validate(state)
 
 
 @pytest.mark.parametrize("come_point", [4, 5, 6, 8, 9, 10])
 def test_come_odds_no_come_bet(come_point):
     """Test that odds without come bet raises IllegalAction."""
     state = make_state(bankroll=1000, point=6)
-    bet = ComeOdds(come_point)
+    bet = COME_ODDS_CLASSES[come_point](stake=10)
 
-    with pytest.raises(IllegalAction, match="without an established come bet"):
-        bet.validate(state, 10)
+    with pytest.raises(InsufficientFunds, match="without an established come bet"):
+        bet.validate(state)
 
 
 def test_come_odds_exceeds_max_odds():
     """Test that odds exceeding max_odds raises IllegalAction."""
     state = make_state(bankroll=1000, point=6, come_4=10, max_odds=3)
-    bet = ComeOdds(4)
+    bet = ComeOdds4(stake=40)  # 4x the come bet
 
-    with pytest.raises(IllegalAction, match="cannot exceed 3x"):
-        bet.validate(state, 40)  # 4x the come bet
+    with pytest.raises(InsufficientFunds, match="3x"):
+        bet.validate(state)
 
 
 def test_come_odds_exceeds_bankroll():
     """Test that odds exceeding bankroll raises IllegalAction."""
     state = make_state(bankroll=50, point=6, come_4=10)
-    bet = ComeOdds(4)
+    bet = ComeOdds4(stake=100)
 
-    with pytest.raises(IllegalAction, match="exceeds bankroll"):
-        bet.validate(state, 100)
+    with pytest.raises(InsufficientFunds, match="exceeds bankroll"):
+        bet.validate(state)
 
 
 # Tests for increment validation
@@ -149,10 +156,10 @@ def test_come_odds_exceeds_bankroll():
 def test_come_odds_5_9_even_amounts_valid(come_point, valid_amount):
     """Test that even amounts are valid for come odds on 5/9."""
     state = make_state(bankroll=1000, point=6, max_odds=20, **{f'come_{come_point}': 10})
-    bet = ComeOdds(come_point)
+    bet = COME_ODDS_CLASSES[come_point](stake=valid_amount)
 
     # Should not raise
-    bet.validate(state, valid_amount)
+    bet.validate(state)
 
 
 @pytest.mark.parametrize("come_point,invalid_amount", [
@@ -166,10 +173,10 @@ def test_come_odds_5_9_even_amounts_valid(come_point, valid_amount):
 def test_come_odds_5_9_odd_amounts_invalid(come_point, invalid_amount):
     """Test that odd amounts raise IllegalAction for come odds on 5/9."""
     state = make_state(bankroll=1000, point=6, max_odds=20, **{f'come_{come_point}': 10})
-    bet = ComeOdds(come_point)
+    bet = COME_ODDS_CLASSES[come_point](stake=invalid_amount)
 
-    with pytest.raises(IllegalAction, match="must be even amounts"):
-        bet.validate(state, invalid_amount)
+    with pytest.raises(InsufficientFunds, match="must be even amounts"):
+        bet.validate(state)
 
 
 @pytest.mark.parametrize("come_point,valid_amount", [
@@ -185,10 +192,10 @@ def test_come_odds_5_9_odd_amounts_invalid(come_point, invalid_amount):
 def test_come_odds_6_8_multiples_of_5_valid(come_point, valid_amount):
     """Test that multiples of $5 are valid for come odds on 6/8."""
     state = make_state(bankroll=1000, point=6, max_odds=20, **{f'come_{come_point}': 10})
-    bet = ComeOdds(come_point)
+    bet = COME_ODDS_CLASSES[come_point](stake=valid_amount)
 
     # Should not raise
-    bet.validate(state, valid_amount)
+    bet.validate(state)
 
 
 @pytest.mark.parametrize("come_point,invalid_amount", [
@@ -202,23 +209,21 @@ def test_come_odds_6_8_multiples_of_5_valid(come_point, valid_amount):
 def test_come_odds_6_8_non_multiples_of_5_invalid(come_point, invalid_amount):
     """Test that non-multiples of $5 raise IllegalAction for come odds on 6/8."""
     state = make_state(bankroll=1000, point=6, max_odds=20, **{f'come_{come_point}': 10})
-    bet = ComeOdds(come_point)
+    bet = COME_ODDS_CLASSES[come_point](stake=invalid_amount)
 
-    with pytest.raises(IllegalAction, match="must be multiples of \\$5"):
-        bet.validate(state, invalid_amount)
+    with pytest.raises(InsufficientFunds, match="must be multiples of \\$5"):
+        bet.validate(state)
 
 
 @pytest.mark.parametrize("come_point", [4, 10])
 def test_come_odds_4_10_any_amount_valid(come_point):
     """Test that any amount is valid for come odds on 4/10 (no increment requirements)."""
     state = make_state(bankroll=1000, point=6, max_odds=20, **{f'come_{come_point}': 10})
-    bet = ComeOdds(come_point)
 
     # All these should be valid (no increment restrictions for 4/10)
-    bet.validate(state, 7)
-    bet.validate(state, 11)
-    bet.validate(state, 13)
-    bet.validate(state, 99)
+    for amount in [7, 11, 13, 99]:
+        bet = COME_ODDS_CLASSES[come_point](stake=amount)
+        bet.validate(state)
 
 
 # Tests for edge cases
@@ -226,16 +231,7 @@ def test_come_odds_4_10_any_amount_valid(come_point):
 def test_come_odds_zero_stake_validation():
     """Test that zero stake always passes validation."""
     state = make_state(bankroll=1000, point=6)  # No come bet
-    bet = ComeOdds(4)
+    bet = ComeOdds4(stake=0)
 
     # Should not raise even without come bet
-    bet.validate(state, 0)
-
-
-def test_invalid_come_point():
-    """Test that invalid come point raises ValueError."""
-    with pytest.raises(ValueError, match="Invalid come point"):
-        ComeOdds(7)
-
-    with pytest.raises(ValueError, match="Invalid come point"):
-        ComeOdds(11)
+    bet.validate(state)

@@ -1,0 +1,13 @@
+TODO Features:
+Continue stress testing the gym
+
+Dark side bets
+
+Things I don't like:
+
+The dualism of ActionBets vs StateBets
+
+Breaking out table config as separate params (consider TableConfig object)
+[Still debating] having to iterate over ActionBet fields when converting from/to numpy
+
+to simplify the first implementation, if any illegal action is taken, the state is frozen and a small negative reward is returned. If training is too slow, introduce an action mask

@@ -1,5 +1,5 @@
-class IllegalAction(Exception):
+class InsufficientFunds(Exception):
     """
-    Exception for illegal actions including rule violations and insufficient bankroll.
+    Exception for actions that result in insufficient funds.
     """
     pass

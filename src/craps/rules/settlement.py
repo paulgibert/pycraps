@@ -1,9 +1,8 @@
 from dataclasses import replace
 from craps.state import TableState
 from craps.dice import Roll
-from craps.bets.registry import BET_REGISTRY
-from craps.bets.protocol import BetType
-from craps.bets.model import iter_bets, set_bets
+from craps.bets.model import iter_bets, set_stake
+
 
 def settle_bets(state: TableState, roll: Roll) -> TableState:
     """
@@ -13,15 +12,14 @@ def settle_bets(state: TableState, roll: Roll) -> TableState:
     bankroll = state.bankroll
     new_bets = state.bets
 
-    for slot, stake in iter_bets(state.bets):
-        if stake == 0:
+    for slot, bet in iter_bets(state.bets):
+        if bet.stake == 0:
             continue
 
-        bet = BET_REGISTRY[slot]
-        result = bet.settle(state, stake, roll)
+        result = bet.settle(state, roll)
 
         bankroll += result.bankroll_delta
-        new_bets = set_bets(new_bets, slot, result.remaining_stake)
+        new_bets = set_stake(new_bets, slot, result.remaining_stake)
 
     return replace(
         state,

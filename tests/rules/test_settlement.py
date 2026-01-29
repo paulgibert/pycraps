@@ -11,7 +11,7 @@ def test_winning_bet():
     next_state = settle_bets(state, roll)
 
     assert next_state.bankroll == 1020  # Won 20
-    assert next_state.bets.pass_line == 0  # Bet resolved
+    assert next_state.bets.pass_line.stake == 0  # Bet resolved
 
 
 def test_losing_bet():
@@ -22,7 +22,7 @@ def test_losing_bet():
     next_state = settle_bets(state, roll)
 
     assert next_state.bankroll == 1000  # Lost stake (already deducted)
-    assert next_state.bets.pass_line == 0  # Bet resolved
+    assert next_state.bets.pass_line.stake == 0  # Bet resolved
 
 
 def test_point_established():
@@ -33,7 +33,7 @@ def test_point_established():
     next_state = settle_bets(state, roll)
 
     assert next_state.bankroll == 1000  # No change
-    assert next_state.bets.pass_line == 10  # Bet remains
+    assert next_state.bets.pass_line.stake == 10  # Bet remains
 
 
 def test_zero_stake():
@@ -44,4 +44,4 @@ def test_zero_stake():
     next_state = settle_bets(state, roll)
 
     assert next_state.bankroll == 1000
-    assert next_state.bets.pass_line == 0
+    assert next_state.bets.pass_line.stake == 0

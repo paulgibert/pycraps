@@ -1,9 +1,13 @@
 import pytest
-from craps.bets.place_bets import PlaceBet
-from craps.bets.protocol import BetResult
+from craps.bets.place_bets import Place4, Place5, Place6, Place8, Place9, Place10
+from craps.bets.model import BetResult
 from craps.dice import Roll
-from craps.exceptions import IllegalAction
+from craps.exceptions import InsufficientFunds
 from conftest import make_state
+
+
+# Helper to get correct bet class by number
+PLACE_CLASSES = {4: Place4, 5: Place5, 6: Place6, 8: Place8, 9: Place9, 10: Place10}
 
 
 # Tests for settle() method
@@ -32,11 +36,11 @@ from conftest import make_state
 def test_place_bet_wins_on_number(number, dice, expected_payout):
     """Test that place bet wins with correct payout when number is rolled."""
     state = make_state(bankroll=1000, point=4)  # Point established
-    bet = PlaceBet(number)
     stake = 5 if number in (4, 5, 9, 10) else 6  # Use valid increments
+    bet = PLACE_CLASSES[number](stake=stake)
     roll = Roll(dice)
 
-    result = bet.settle(state, stake, roll)
+    result = bet.settle(state, roll)
 
     assert result.bankroll_delta == expected_payout
     assert result.remaining_stake == stake  # Stays on table
@@ -46,10 +50,10 @@ def test_place_bet_wins_on_number(number, dice, expected_payout):
 def test_place_bet_loses_on_seven(number):
     """Test that place bet loses on seven-out."""
     state = make_state(bankroll=1000, point=4)
-    bet = PlaceBet(number)
+    bet = PLACE_CLASSES[number](stake=10)
     roll = Roll((3, 4))  # 7
 
-    result = bet.settle(state, 10, roll)
+    result = bet.settle(state, roll)
 
     assert result.bankroll_delta == 0
     assert result.remaining_stake == 0
@@ -66,10 +70,10 @@ def test_place_bet_loses_on_seven(number):
 def test_place_bet_stays_on_other_numbers(number, other_roll):
     """Test that place bet has no action on other numbers."""
     state = make_state(bankroll=1000, point=4)
-    bet = PlaceBet(number)
     stake = 5 if number in (4, 5, 9, 10) else 6
+    bet = PLACE_CLASSES[number](stake=stake)
 
-    result = bet.settle(state, stake, other_roll)
+    result = bet.settle(state, other_roll)
 
     assert result.bankroll_delta == 0
     assert result.remaining_stake == stake
@@ -86,11 +90,11 @@ def test_place_bet_stays_on_other_numbers(number, other_roll):
 def test_place_bet_off_during_comeout(number, dice):
     """Test that place bet is OFF during come-out roll."""
     state = make_state(bankroll=1000, point=None)  # Come-out
-    bet = PlaceBet(number)
     stake = 5 if number in (4, 5, 9, 10) else 6
+    bet = PLACE_CLASSES[number](stake=stake)
     roll = Roll(dice)
 
-    result = bet.settle(state, stake, roll)
+    result = bet.settle(state, roll)
 
     # Should have no action (not win)
     assert result.bankroll_delta == 0
@@ -101,11 +105,11 @@ def test_place_bet_off_during_comeout(number, dice):
 def test_place_bet_off_on_comeout_seven(number):
     """Test that place bet doesn't lose on seven during come-out."""
     state = make_state(bankroll=1000, point=None)  # Come-out
-    bet = PlaceBet(number)
     stake = 5 if number in (4, 5, 9, 10) else 6
+    bet = PLACE_CLASSES[number](stake=stake)
     roll = Roll((3, 4))  # 7
 
-    result = bet.settle(state, stake, roll)
+    result = bet.settle(state, roll)
 
     # Should have no action (not lose)
     assert result.bankroll_delta == 0
@@ -115,10 +119,10 @@ def test_place_bet_off_on_comeout_seven(number):
 def test_place_bet_zero_stake():
     """Test that zero stake returns zero result."""
     state = make_state(bankroll=1000, point=4)
-    bet = PlaceBet(6)
+    bet = Place6(stake=0)
     roll = Roll((3, 3))
 
-    result = bet.settle(state, 0, roll)
+    result = bet.settle(state, roll)
 
     assert result.bankroll_delta == 0
     assert result.remaining_stake == 0
@@ -130,59 +134,59 @@ def test_place_bet_zero_stake():
 def test_validate_legal_bet(number):
     """Test that legal place bets pass validation."""
     state = make_state(bankroll=1000, point=4)
-    bet = PlaceBet(number)
     stake = 5 if number in (4, 5, 9, 10) else 6
+    bet = PLACE_CLASSES[number](stake=stake)
 
-    bet.validate(state, stake)  # Should not raise
+    bet.validate(state)  # Should not raise
 
 
 @pytest.mark.parametrize("number", [4, 5, 6, 8, 9, 10])
 def test_validate_negative_bet(number):
     """Test that negative place bet raises IllegalAction."""
     state = make_state(bankroll=1000, point=4)
-    bet = PlaceBet(number)
+    bet = PLACE_CLASSES[number](stake=-10)
 
-    with pytest.raises(IllegalAction, match="cannot be negative"):
-        bet.validate(state, -10)
+    with pytest.raises(InsufficientFunds, match="cannot be negative"):
+        bet.validate(state)
 
 
 @pytest.mark.parametrize("number", [4, 5, 6, 8, 9, 10])
 def test_validate_exceeds_bankroll(number):
     """Test that place bet exceeding bankroll raises IllegalAction."""
     state = make_state(bankroll=50, point=4)
-    bet = PlaceBet(number)
+    bet = PLACE_CLASSES[number](stake=100)
 
-    with pytest.raises(IllegalAction, match="exceeds bankroll"):
-        bet.validate(state, 100)
+    with pytest.raises(InsufficientFunds, match="exceeds bankroll"):
+        bet.validate(state)
 
 
 @pytest.mark.parametrize("number", [4, 5, 6, 8, 9, 10])
 def test_validate_below_table_min(number):
     """Test that place bet below table min raises IllegalAction."""
     state = make_state(bankroll=1000, point=4, table_min=10)
-    bet = PlaceBet(number)
+    bet = PLACE_CLASSES[number](stake=5)
 
-    with pytest.raises(IllegalAction, match="table minimum"):
-        bet.validate(state, 5)
+    with pytest.raises(InsufficientFunds, match="table minimum"):
+        bet.validate(state)
 
 
 @pytest.mark.parametrize("number", [4, 5, 6, 8, 9, 10])
 def test_validate_above_table_max(number):
     """Test that place bet above table max raises IllegalAction."""
     state = make_state(bankroll=10000, point=4, table_max=500)
-    bet = PlaceBet(number)
+    bet = PLACE_CLASSES[number](stake=1000)
 
-    with pytest.raises(IllegalAction, match="table maximum"):
-        bet.validate(state, 1000)
+    with pytest.raises(InsufficientFunds, match="table maximum"):
+        bet.validate(state)
 
 
 @pytest.mark.parametrize("number", [4, 5, 6, 8, 9, 10])
 def test_validate_zero_stake(number):
     """Test that zero stake passes validation."""
     state = make_state(bankroll=1000, point=4)
-    bet = PlaceBet(number)
+    bet = PLACE_CLASSES[number](stake=0)
 
-    bet.validate(state, 0)  # Should not raise
+    bet.validate(state)  # Should not raise
 
 
 # Tests for increment validation
@@ -200,9 +204,9 @@ def test_validate_zero_stake(number):
 def test_place_6_8_multiples_of_6_valid(number, valid_amount):
     """Test that multiples of $6 are valid for place bets on 6/8."""
     state = make_state(bankroll=1000, point=4)
-    bet = PlaceBet(number)
+    bet = PLACE_CLASSES[number](stake=valid_amount)
 
-    bet.validate(state, valid_amount)  # Should not raise
+    bet.validate(state)  # Should not raise
 
 
 @pytest.mark.parametrize("number,invalid_amount", [
@@ -218,10 +222,10 @@ def test_place_6_8_multiples_of_6_valid(number, valid_amount):
 def test_place_6_8_non_multiples_of_6_invalid(number, invalid_amount):
     """Test that non-multiples of $6 raise IllegalAction for place bets on 6/8."""
     state = make_state(bankroll=1000, point=4)
-    bet = PlaceBet(number)
+    bet = PLACE_CLASSES[number](stake=invalid_amount)
 
-    with pytest.raises(IllegalAction, match="multiples of \\$6"):
-        bet.validate(state, invalid_amount)
+    with pytest.raises(InsufficientFunds, match="multiples of \\$6"):
+        bet.validate(state)
 
 
 @pytest.mark.parametrize("number,valid_amount", [
@@ -245,9 +249,9 @@ def test_place_6_8_non_multiples_of_6_invalid(number, invalid_amount):
 def test_place_4_5_9_10_multiples_of_5_valid(number, valid_amount):
     """Test that multiples of $5 are valid for place bets on 4/5/9/10."""
     state = make_state(bankroll=1000, point=6)
-    bet = PlaceBet(number)
+    bet = PLACE_CLASSES[number](stake=valid_amount)
 
-    bet.validate(state, valid_amount)  # Should not raise
+    bet.validate(state)  # Should not raise
 
 
 @pytest.mark.parametrize("number,invalid_amount", [
@@ -267,10 +271,10 @@ def test_place_4_5_9_10_multiples_of_5_valid(number, valid_amount):
 def test_place_4_5_9_10_non_multiples_of_5_invalid(number, invalid_amount):
     """Test that non-multiples of $5 raise IllegalAction for place bets on 4/5/9/10."""
     state = make_state(bankroll=1000, point=6)
-    bet = PlaceBet(number)
+    bet = PLACE_CLASSES[number](stake=invalid_amount)
 
-    with pytest.raises(IllegalAction, match="multiples of \\$5"):
-        bet.validate(state, invalid_amount)
+    with pytest.raises(InsufficientFunds, match="multiples of \\$5"):
+        bet.validate(state)
 
 
 # Payout verification tests
@@ -278,10 +282,10 @@ def test_place_4_5_9_10_non_multiples_of_5_invalid(number, invalid_amount):
 def test_place_4_10_payout():
     """Test that place bet on 4/10 pays 9:5."""
     state = make_state(bankroll=1000, point=6)
-    bet = PlaceBet(4)
+    bet = Place4(stake=5)
     roll = Roll((2, 2))  # 4
 
-    result = bet.settle(state, 5, roll)
+    result = bet.settle(state, roll)
 
     assert result.bankroll_delta == 9  # $9 winnings (stake stays on table)
 
@@ -289,10 +293,10 @@ def test_place_4_10_payout():
 def test_place_5_9_payout():
     """Test that place bet on 5/9 pays 7:5."""
     state = make_state(bankroll=1000, point=6)
-    bet = PlaceBet(5)
+    bet = Place5(stake=5)
     roll = Roll((2, 3))  # 5
 
-    result = bet.settle(state, 5, roll)
+    result = bet.settle(state, roll)
 
     assert result.bankroll_delta == 7  # $7 winnings (stake stays on table)
 
@@ -300,20 +304,9 @@ def test_place_5_9_payout():
 def test_place_6_8_payout():
     """Test that place bet on 6/8 pays 7:6."""
     state = make_state(bankroll=1000, point=4)
-    bet = PlaceBet(6)
+    bet = Place6(stake=6)
     roll = Roll((3, 3))  # 6
 
-    result = bet.settle(state, 6, roll)
+    result = bet.settle(state, roll)
 
     assert result.bankroll_delta == 7  # $7 winnings (stake stays on table)
-
-
-# Edge case tests
-
-def test_invalid_place_number():
-    """Test that invalid place number raises ValueError."""
-    with pytest.raises(ValueError, match="Invalid place number"):
-        PlaceBet(7)
-
-    with pytest.raises(ValueError, match="Invalid place number"):
-        PlaceBet(11)

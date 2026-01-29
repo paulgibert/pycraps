@@ -1,153 +1,102 @@
-from dataclasses import dataclass, replace, fields
-from typing import Iterator
+from abc import ABC, abstractmethod
+from typing import Callable, Tuple
+from typing import Optional
+from craps.phase import TablePhase
+from craps.dice import Roll
 
-@dataclass(frozen=True)
-class ActionBets:
-    """
-    Represents bet amounts controlled by the player in an Action.
-    These are the bets the player can directly set/modify.
-    """
-    # Pass line bets
-    pass_line: int = 0
-    pass_odds: int = 0
+class Bet(ABC):
+    def set_stake(self, amount: float, target: Optional[None]=None):
+        """
+        # TODO
+        """
+        if amount < 0.0:
+            raise ValueError(f"Cannot set stake amount to zero.")
+        self._set_stake(amount, target=target)
+    
+    def get_stake(self, target: Optional[None]=None) -> float:
+        """
+        # TODO
+        """
+        # No additional logic here. Just abstracting to _get_stake() for API consitency in the child class.
+        return self._get_stake(target=target)
 
-    # Come bets
-    come_bet: int = 0  # Amount to place as traveling come bet
-    come_odds_4: int = 0
-    come_odds_5: int = 0
-    come_odds_6: int = 0
-    come_odds_8: int = 0
-    come_odds_9: int = 0
-    come_odds_10: int = 0
+    def set_odds(self, amount: float, target: Optional[None]=None):
+        """
+        # TODO
+        """
+        if amount < 0.0:
+            raise ValueError(f"Cannot set stake amount to zero.")
+        self._set_odds(amount, target=target)
+    
+    def get_odds(self, target: Optional[None]=None) -> float:
+        """
+        # TODO
+        """
+        # No additional logic here. Just abstracting to _get_odds() for API consitency in the child class.
+        return self._get_odds(target=target)
+    
+    def settle(self, phase: TablePhase, roll: Roll) -> float:
+        """
+        # TODO
+        """
+        # No additional logic here. Just abstracting to _settle() for API consitency in the child class.
+        return self._settle(phase, roll)
+    
+    @abstractmethod
+    def _set_stake(self, amount: float, target: Optional[None]=None):
+        """
+        # TODO
+        """
+        raise NotImplementedError
 
-    # Place bets
-    place_4: int = 0
-    place_5: int = 0
-    place_6: int = 0
-    place_8: int = 0
-    place_9: int = 0
-    place_10: int = 0
+    @abstractmethod
+    def _get_stake(self, target: Optional[None]=None) -> float:
+        """
+        # TODO
+        """
+        raise NotImplementedError
 
-    # Buy bets
-    buy_4: int = 0
-    buy_5: int = 0
-    buy_6: int = 0
-    buy_8: int = 0
-    buy_9: int = 0
-    buy_10: int = 0
+    @abstractmethod
+    def _set_odds(self, amount: float, target: Optional[None]=None):
+        """
+        # TODO
+        """
+        raise NotImplementedError
 
-    # Field bet
-    field: int = 0
+    @abstractmethod
+    def _get_odds(self, target: Optional[None]=None) -> float:
+        """
+        # TODO
+        """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def _settle(self, phase: TablePhase, roll: Roll) -> float:
+        """
+        # TODO
+        """
+        raise NotImplementedError
 
-    # Hardway bets
-    hard_4: int = 0
-    hard_6: int = 0
-    hard_8: int = 0
-    hard_10: int = 0
+def requires_target(allowed: Tuple[int]):
+    def decorator(fn: Callable):
+        def wrapper(self, *args, **kwargs):
+            target = kwargs.get("target")
+            if target is None:
+                raise ValueError(f"A value for 'target' must be provided.")
+            if target not in allowed:
+                raise ValueError(f"'target' must be one of: {','.join(allowed)}. Got: {target}")
+            fn()
+        return wrapper
+    return decorator
 
-    # One-roll proposition bets
-    any_seven: int = 0
-    any_craps: int = 0
-    ace_deuce: int = 0    # 3
-    aces: int = 0          # 2
-    boxcars: int = 0       # 12
-    yo_leven: int = 0      # 11
+def forbids_target(fn: Callable):
+    def wrapper(self, *args, **kwargs):
+        if kwargs.get("target") is not None:
+            raise ValueError(f"A value for 'target' was provided but the method does not use the 'target' kwarg.")
+        fn()
+    return wrapper
 
-    # Combination proposition bets
-    horn: int = 0          # Splits 4 ways on 2, 3, 11, 12
-    c_and_e: int = 0       # Splits 2 ways on Any Craps and 11
-
-    # Future: Don't pass/come
-    # dont_pass: int = 0
-    # dont_pass_odds: int = 0
-
-
-@dataclass(frozen=True)
-class StateBets:
-    """
-    Represents the full bet state on the table, including engine-managed bets.
-    This includes both player-controlled and engine-established bets.
-    """
-    # Pass line bets
-    pass_line: int = 0
-    pass_odds: int = 0
-
-    # Come bets (engine-managed)
-    come_traveling: int = 0  # Traveling come bet
-    come_4: int = 0          # Established come bets
-    come_5: int = 0
-    come_6: int = 0
-    come_8: int = 0
-    come_9: int = 0
-    come_10: int = 0
-
-    # Come odds
-    come_odds_4: int = 0
-    come_odds_5: int = 0
-    come_odds_6: int = 0
-    come_odds_8: int = 0
-    come_odds_9: int = 0
-    come_odds_10: int = 0
-
-    # Place bets
-    place_4: int = 0
-    place_5: int = 0
-    place_6: int = 0
-    place_8: int = 0
-    place_9: int = 0
-    place_10: int = 0
-
-    # Buy bets
-    buy_4: int = 0
-    buy_5: int = 0
-    buy_6: int = 0
-    buy_8: int = 0
-    buy_9: int = 0
-    buy_10: int = 0
-
-    # Field bet
-    field: int = 0
-
-    # Hardway bets
-    hard_4: int = 0
-    hard_6: int = 0
-    hard_8: int = 0
-    hard_10: int = 0
-
-    # One-roll proposition bets
-    any_seven: int = 0
-    any_craps: int = 0
-    ace_deuce: int = 0    # 3
-    aces: int = 0          # 2
-    boxcars: int = 0       # 12
-    yo_leven: int = 0      # 11
-
-    # Combination proposition bets
-    horn: int = 0          # Splits 4 ways on 2, 3, 11, 12
-    c_and_e: int = 0       # Splits 2 ways on Any Craps and 11
-
-    # Future: Don't pass/come
-    # dont_pass: int = 0
-    # dont_pass_odds: int = 0
-
-    # Future: Lay, hardways, props
-    # lay: Dict[int, int]
-    # hardways: Dict[int, int]      # 4,6,8,10
-    # props: Dict[str, int]
-
-def set_bets(bets: StateBets, slot: str, stake: int) -> StateBets:
-    """
-    Returns a new StateBets object with the specified bet slot set to the given stake.
-    Auto-scales with StateBets dataclass fields.
-    """
-    if not hasattr(bets, slot):
-        raise KeyError(f"Unknown bet slot: {slot}")
-    return replace(bets, **{slot: stake})
-
-def iter_bets(bets: StateBets) -> Iterator[tuple[str, int]]:
-    """
-    Iterates over bet slots and their stakes.
-    Auto-scales with StateBets dataclass fields.
-    """
-    for field in fields(StateBets):
-        yield (field.name, getattr(bets, field.name))
+def forbids_odds__do_not_call(fn: Callable):
+    def wrapper(self, *args, **kwargs):
+        raise RuntimeError(f"This bet does not have odds.")
+    return wrapper

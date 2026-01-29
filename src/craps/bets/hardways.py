@@ -1,71 +1,72 @@
-from craps.bets.protocol import BetType, BetResult
-from craps.state import TableState
+from dataclasses import dataclass
+from typing import ClassVar, TYPE_CHECKING
+
 from craps.dice import Roll
-from craps.exceptions import IllegalAction
+from craps.bets.model import Bet, BetResult
+from craps.exceptions import InsufficientFunds
+
+if TYPE_CHECKING:
+    from craps.state import TableState
 
 
-class HardwayBet(BetType):
+@dataclass(frozen=True)
+class HardwayBet(Bet):
     """
-    Hardway bet on a specific number (4, 6, 8, 10).
-
-    Rules:
-    - Wins when the number rolls "the hard way" (as doubles)
-    - Loses when the number rolls "easy" (not doubles) OR on 7
-    - Multi-roll bet (stays on table until it wins or loses)
-    - OFF during come-out roll
-    - Payouts:
-      - Hard 4 (2,2) and Hard 10 (5,5): pays 7:1
-      - Hard 6 (3,3) and Hard 8 (4,4): pays 9:1
+    Base class for hardway bets. Wins on doubles, loses on easy or 7.
+    OFF during come-out. Hard 4/10 pays 7:1, Hard 6/8 pays 9:1.
     """
+    number: ClassVar[int]
 
-    def __init__(self, number: int):
-        if number not in (4, 6, 8, 10):
-            raise ValueError(f"Invalid hardway number: {number}")
-        self.number = number
-
-    def settle(self, state: TableState, stake: int, roll: Roll) -> BetResult:
-        """Settle hardway bet for a given roll."""
-        if stake == 0:
+    def settle(self, state: 'TableState', roll: Roll) -> BetResult:
+        if self.stake == 0:
             return BetResult(0, 0)
-
-        # OFF during come-out roll
+        # OFF during come-out
         if state.point is None:
-            return BetResult(0, stake)
-
-        # Win if rolled the hard way
+            return BetResult(0, self.stake)
+        # Win if rolled the hard way (doubles)
         if roll.total() == self.number and roll[0] == roll[1]:
-            # Hard 4/10 pays 7:1, Hard 6/8 pays 9:1
             if self.number in (4, 10):
-                return BetResult(stake + stake * 7, 0)
+                return BetResult(self.stake + self.stake * 7, 0)  # 7:1
             else:  # 6, 8
-                return BetResult(stake + stake * 9, 0)
-
-        # Lose if rolled easy way or 7
+                return BetResult(self.stake + self.stake * 9, 0)  # 9:1
+        # Lose if rolled easy or 7
         elif roll.total() == self.number or roll.total() == 7:
             return BetResult(0, 0)
-
-        # No action on other numbers
         else:
-            return BetResult(0, stake)
+            return BetResult(0, self.stake)
 
-    def validate(self, state: TableState, stake: int) -> None:
-        """Validate hardway bet amount."""
-        # Negative check
-        if stake < 0:
-            raise IllegalAction("Hardway bet amount cannot be negative")
-
-        # Zero is valid (removing bet)
-        if stake == 0:
+    def validate(self, state: 'TableState') -> None:
+        if self.stake < 0:
+            raise InsufficientFunds("Hardway bet cannot be negative")
+        if self.stake == 0:
             return
+        if self.stake > state.bankroll:
+            raise InsufficientFunds("Hardway bet exceeds bankroll")
+        if self.stake < state.prop_min:
+            raise InsufficientFunds(f"Hardway bet below prop minimum ${state.prop_min}")
+        if self.stake > state.table_max:
+            raise InsufficientFunds(f"Hardway bet exceeds table maximum ${state.table_max}")
 
-        # Bankroll check
-        if stake > state.bankroll:
-            raise IllegalAction("Hardway bet exceeds bankroll")
 
-        # Prop minimum
-        if stake < state.prop_min:
-            raise IllegalAction(f"Hardway bet below prop minimum ${state.prop_min}")
+@dataclass(frozen=True)
+class Hard4(HardwayBet):
+    number: ClassVar[int] = 4
+    increment: ClassVar[tuple[int, ...]] = (1,)
 
-        # Table maximum
-        if stake > state.table_max:
-            raise IllegalAction(f"Hardway bet exceeds table maximum ${state.table_max}")
+
+@dataclass(frozen=True)
+class Hard6(HardwayBet):
+    number: ClassVar[int] = 6
+    increment: ClassVar[tuple[int, ...]] = (1,)
+
+
+@dataclass(frozen=True)
+class Hard8(HardwayBet):
+    number: ClassVar[int] = 8
+    increment: ClassVar[tuple[int, ...]] = (1,)
+
+
+@dataclass(frozen=True)
+class Hard10(HardwayBet):
+    number: ClassVar[int] = 10
+    increment: ClassVar[tuple[int, ...]] = (1,)
