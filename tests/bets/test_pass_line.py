@@ -1,116 +1,127 @@
 import pytest
-from craps.bets.pass_line import PassLine
-from craps.bets.model import BetResult
+from craps.phase import TablePhase
 from craps.dice import Roll
-from craps.exceptions import InsufficientFunds
-from conftest import make_state
+from craps.bets.pass_line import PassLine
+from craps.exceptions import IllegalAction
+
+NATURALS = [Roll((3, 4)), Roll((5, 6))]
+CRAPS_ROLLS = [Roll((1, 1)), Roll((1, 2)), Roll((6, 6))]
+POINT_ROLLS = [Roll((2, 2)), Roll((2, 3)), Roll((1, 5)), Roll((2, 6)), Roll((5, 4)), Roll((5, 5))]
+
+@pytest.fixture
+def comeout():
+    return TablePhase(point=None)
+
+@pytest.fixture
+def pass_line_on_6(comeout):
+    pl = PassLine(comeout)
+    pl.set_stake(30.0)
+    pl.settle(Roll((3, 3)))
+    return pl
 
 
-# Tests for settle() method
+class TestSettleComeout:
+    @pytest.mark.parametrize("roll", NATURALS)
+    def test_natural_winner(self, roll: Roll, comeout: TablePhase):
+        pl = PassLine(comeout)
+        pl.set_stake(25.0)
+        assert pl.settle(roll) == 50.0
+        assert pl.get_stake() == 0.0
 
-@pytest.mark.parametrize("dice", [(3, 4), (5, 6)])
-def test_settle_come_out_natural_wins(dice):
-    """Test that 7 and 11 on come-out win."""
-    state = make_state(point=None)
-    bet = PassLine(stake=10)
-    roll = Roll(dice)
+    @pytest.mark.parametrize("roll", CRAPS_ROLLS)
+    def test_craps(self, roll: Roll, comeout: TablePhase):
+        pl = PassLine(comeout)
+        pl.set_stake(25.0)
+        assert pl.settle(roll) == 0.0
+        assert pl.get_stake() == 0.0
 
-    result = bet.settle(state, roll)
+    @pytest.mark.parametrize("roll", POINT_ROLLS)
+    def test_establishing_point(self, roll: Roll, comeout: TablePhase):
+        pl = PassLine(comeout)
+        pl.set_stake(25.0)
+        assert pl.settle(roll) == 0.0
+        assert pl.get_stake() == 25.0
 
-    assert result == BetResult(bankroll_delta=20, remaining_stake=0)
+    def test_set_odds_errors_during_comeout(self, comeout: TablePhase):
+        pl = PassLine(comeout)
+        pl.set_stake(30.0)
+        with pytest.raises(IllegalAction):
+            pl.set_odds(60.0)
 
+    def test_initial_stake_and_odds_are_zero(self, comeout: TablePhase):
+        pl = PassLine(comeout)
+        assert pl.get_stake() == 0.0
+        assert pl.get_odds() == 0.0
 
-@pytest.mark.parametrize("dice", [(1, 1), (1, 2), (6, 6)])
-def test_settle_come_out_craps_loses(dice):
-    """Test that 2, 3, and 12 on come-out lose."""
-    state = make_state(point=None)
-    bet = PassLine(stake=10)
-    roll = Roll(dice)
+    @pytest.mark.parametrize("roll", NATURALS + CRAPS_ROLLS)
+    def test_settle_with_no_stake(self, roll: Roll, comeout: TablePhase):
+        pl = PassLine(comeout)
+        assert pl.settle(roll) == 0.0
 
-    result = bet.settle(state, roll)
+    def test_set_stake_with_target_errors(self, comeout: TablePhase):
+        pl = PassLine(comeout)
+        with pytest.raises(ValueError):
+            pl.set_stake(30.0, target=6)
 
-    assert result == BetResult(bankroll_delta=0, remaining_stake=0)
+    def test_get_stake_with_target_errors(self, comeout: TablePhase):
+        pl = PassLine(comeout)
+        with pytest.raises(ValueError):
+            pl.get_stake(target=6)
 
-
-@pytest.mark.parametrize("dice,point", [
-    ((2, 2), 4),
-    ((2, 3), 5),
-    ((3, 3), 6),
-    ((4, 4), 8),
-    ((4, 5), 9),
-    ((5, 5), 10),
-])
-def test_settle_come_out_point_established(dice, point):
-    """Test that point numbers establish the point without changing the bet."""
-    state = make_state(point=None)
-    bet = PassLine(stake=10)
-    roll = Roll(dice)
-
-    result = bet.settle(state, roll)
-
-    assert result == BetResult(bankroll_delta=0, remaining_stake=10)
-
-
-def test_settle_point_made():
-    """Test that hitting the point wins."""
-    state = make_state(point=6)
-    bet = PassLine(stake=10)
-    roll = Roll((3, 3))  # 6
-
-    result = bet.settle(state, roll)
-
-    assert result == BetResult(bankroll_delta=20, remaining_stake=0)
+    def test_get_odds_with_target_errors(self, comeout: TablePhase):
+        pl = PassLine(comeout)
+        with pytest.raises(ValueError):
+            pl.get_odds(target=6)
 
 
-def test_settle_seven_out():
-    """Test that rolling 7 during point loses."""
-    state = make_state(point=6)
-    bet = PassLine(stake=10)
-    roll = Roll((3, 4))  # 7
-
-    result = bet.settle(state, roll)
-
-    assert result == BetResult(bankroll_delta=0, remaining_stake=0)
-
-
-def test_settle_other_number_during_point():
-    """Test that other numbers during point keep bet alive."""
-    state = make_state(point=6)
-    bet = PassLine(stake=10)
-    roll = Roll((2, 3))  # 5
-
-    result = bet.settle(state, roll)
-
-    assert result == BetResult(bankroll_delta=0, remaining_stake=10)
-
-
-# Tests for validate() method
-
-@pytest.mark.parametrize("stake,bankroll,table_min,table_max,point,current_bet,error_msg", [
-    (-10, 1000, 5, 1000, None, 0, "negative"),
-    (200, 100, 5, 1000, None, 0, "exceeds bankroll"),
-    (3, 1000, 5, 1000, None, 0, "table minimum"),
-    (2000, 10000, 5, 1000, None, 0, "table maximum"),
-    (20, 1000, 5, 1000, 6, 10, "Cannot change"),
-])
-def test_validate_illegal_bets(stake, bankroll, table_min, table_max, point, current_bet, error_msg):
-    """Test that illegal bets raise IllegalAction."""
-    state = make_state(
-        bankroll=bankroll,
-        point=point,
-        pass_line_bet=current_bet,
-        table_min=table_min,
-        table_max=table_max
+class TestSettlePointOn:
+    @pytest.mark.parametrize(
+        "point, winnings",
+        [
+            (Roll((2, 2)), 240.0),
+            (Roll((2, 3)), 210.0),
+            (Roll((1, 5)), 192.0),
+            (Roll((2, 6)), 192.0),
+            (Roll((5, 4)), 210.0),
+            (Roll((5, 5)), 240.0),
+        ],
     )
-    bet = PassLine(stake=stake)
+    def test_hitting_point(self, point: Roll, winnings: float, comeout: TablePhase):
+        pl = PassLine(comeout)
+        pl.set_stake(30.0)
+        pl.settle(point)
+        pl.set_odds(60.0)
+        assert pl.settle(point) == winnings
+        assert pl.get_stake() == 0.0
+        assert pl.get_odds() == 0.0
 
-    with pytest.raises(InsufficientFunds, match=error_msg):
-        bet.validate(state)
+    def test_seven_out(self, pass_line_on_6: PassLine):
+        pass_line_on_6.set_odds(60.0)
+        assert pass_line_on_6.settle(Roll((3, 4))) == 0.0
+        assert pass_line_on_6.get_stake() == 0.0
+        assert pass_line_on_6.get_odds() == 0.0
 
+    def test_other_roll(self, pass_line_on_6: PassLine):
+        pass_line_on_6.set_odds(60.0)
+        assert pass_line_on_6.settle(Roll((2, 2))) == 0.0
+        assert pass_line_on_6.get_stake() == 30.0
+        assert pass_line_on_6.get_odds() == 60.0
 
-def test_validate_legal_bet():
-    """Test that legal bets pass validation."""
-    state = make_state(bankroll=1000, point=None)
-    bet = PassLine(stake=10)
+    def test_set_stake_errors_during_point(self, pass_line_on_6: PassLine):
+        with pytest.raises(IllegalAction):
+            pass_line_on_6.set_stake(0.0)
 
-    bet.validate(state)  # Should not raise
+    def test_set_odds_with_target_errors(self, pass_line_on_6: PassLine):
+        with pytest.raises(ValueError):
+            pass_line_on_6.set_odds(30.0, target=6)
+
+    def test_set_odds_replaces_previous_odds(self, pass_line_on_6: PassLine):
+        pass_line_on_6.set_odds(60.0)
+        pass_line_on_6.set_odds(100.0)
+        assert pass_line_on_6.get_odds() == 100.0
+
+    def test_set_odds_with_zero_stake_errors(self, comeout: TablePhase):
+        pl = PassLine(comeout)
+        pl.settle(Roll((3, 3)))
+        with pytest.raises(IllegalAction):
+            pl.set_odds(30.0)

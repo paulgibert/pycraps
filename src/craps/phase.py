@@ -1,8 +1,7 @@
-from typing import Optional, Dict, Iterator, Tuple
+from typing import Optional, Dict
 from dataclasses import dataclass, replace
 from craps.dice import Roll
 from craps.constants import POINTS, SEVEN_OUT
-from craps.registry import BETS_REGISTRY
 
 @dataclass
 class TablePhase:
@@ -10,9 +9,6 @@ class TablePhase:
     Represents the phase of the table, such as the point and value of stateful bets.
     """
     point: Optional[int]=None
-    pass_line: int=0
-    come_bets: Dict[int: bool]={n: False for n in POINTS}
-    dont_come_bets: Dict[int: bool]={n: False for n in POINTS}
 
 def transition_phase(phase: TablePhase, roll: Roll) -> TablePhase:
     total = roll.total()

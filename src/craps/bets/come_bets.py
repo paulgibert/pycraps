@@ -1,83 +1,149 @@
 from typing import Optional
 from craps.phase import TablePhase
+from craps.exceptions import IllegalAction
 from craps.dice import Roll
 from craps.constants import POINTS, NATURAL_WINNERS, CRAPS, SEVEN_OUT
-from craps.bets.model import Bet, requires_target
+from craps.bets.model import Bet
 from craps.bets.utils import TRUE_ODDS
 
+
 class ComeBets(Bet):
-    def __init__(self):
-        self._pending_stake = 0
+    """Manages all come bets on the table.
+
+    A come bet behaves like a pass line bet but can only be placed after a point
+    is established. A pending come bet sits on the come line until the next roll
+    resolves it (natural wins, craps loses, or a point number moves it to that
+    number). Once moved to a point, odds can be placed behind it. The bet wins
+    when that point is rolled again and loses on a seven-out.
+    """
+
+    def __init__(self, init_phase: TablePhase):
+        super().__init__(init_phase)
+        self._pending_stake = 0.0
         self._stake = {n: 0.0 for n in POINTS}
         self._odds = {n: 0.0 for n in POINTS}
 
-    def settle(self, phase: TablePhase, roll: Roll) -> float:
-        """
-        # TODO
+    def _settle(self, roll: Roll) -> float:
+        """Settle all come bets for the given roll.
+
+        Come-out phase:
+            - No action; come bets cannot be active during come-out.
+
+        Point phase:
+            - Natural (7, 11): pending come bet wins even money.
+            - Craps (2, 3, 12): pending come bet loses.
+            - Seven-out (7): all established come bets and odds lose.
+            - Point number: pays out any existing come bet on that number at
+              true odds, then moves the pending stake to that number.
+
+        Returns:
+            The total payout across all come bets, or 0.0 on a loss/no-action.
         """
         total = roll.total()
-        if phase.point is None:
-            return 0
-        
-        if total in NATURAL_WINNERS:
-            winnings = self._pending * 2.0
-            self._clear_pending()
-        elif total in CRAPS:
-            winnings = 0
-            self.clear_pending()
-        elif total == SEVEN_OUT:
-            winnings = 0
-            self.clear_all()
-        else:
-            winnings = (self._stake[total] * 2.0) + (1.0 + TRUE_ODDS[total]) * self._odds[total]
-            self.clear_target(total)
-            self._move_pending(total)
+        if self._phase.point is None:
+            return 0.0
 
+        if total == SEVEN_OUT:
+            # Pending come bet wins (7 is a natural), but all established
+            # come bets and odds are lost.
+            winnings = self._pending_stake * 2.0
+            self._clear_all()
+            return winnings
+
+        if total in NATURAL_WINNERS:
+            winnings = self._pending_stake * 2.0
+            self._clear_pending()
+            return winnings
+
+        if total in CRAPS:
+            self._clear_pending()
+            return 0.0
+
+        # A point number was rolled
+        winnings = (self._stake[total] * 2.0) + (1.0 + TRUE_ODDS[total]) * self._odds[total]
+        self._clear_target(total)
+        self._move_pending(total)
         return winnings
 
-    @requires_target(POINTS)
-    def _set_stake(self, amount: float, target: Optional[None]=None):
-        """
-        # TODO
-        """
-        self._stake[target] = amount
+    def _set_stake(self, amount: float, target: Optional[int] = None):
+        """Place a come bet (pending).
 
-    @requires_target(POINTS)
-    def _get_stake(self, target: Optional[None]=None) -> float:
+        Can only be placed during the point phase and must not specify a target.
+        The pending stake will be moved to a point number on the next applicable roll.
+
+        Raises:
+            IllegalAction: If called during come-out or with a specific target.
         """
-        # TODO
+        if self._phase.point is None:
+            raise IllegalAction("Cannot place a come bet on the come-out roll.")
+        if target is not None:
+            raise IllegalAction("Cannot set stake on a specific come point target.")
+        self._pending_stake = amount
+
+    def _get_stake(self, target: Optional[int] = None) -> float:
+        """Return the current come bet stake.
+
+        Args:
+            target: None for the pending stake, or a point number for an
+                    established come bet.
+
+        Raises:
+            ValueError: If target is not a valid point number.
         """
+        if target is None:
+            return self._pending_stake
+        if target not in POINTS:
+            raise ValueError(f"'target' must be one of: {POINTS}. Got: {target}")
         return self._stake[target]
 
-    @requires_target(POINTS)
-    def _set_odds(self, amount: float, target: Optional[None]=None):
+    def _set_odds(self, amount: float, target: Optional[int] = None):
+        """Set odds behind an established come bet.
+
+        Requires a specific point target that has an existing come bet stake.
+
+        Raises:
+            IllegalAction: If target is None or no come bet exists on the target.
         """
-        # TODO
-        """
+        if target is None:
+            raise IllegalAction("Cannot set odds without a target.")
+        if target not in POINTS:
+            raise ValueError(f"'target' must be one of: {POINTS}. Got: {target}")
+        if self._stake[target] == 0:
+            raise IllegalAction(f"No come bet on {target}.")
         self._odds[target] = amount
 
-    @requires_target(POINTS)
-    def _get_odds(self, target: Optional[None]=None) -> float:
+    def _get_odds(self, target: Optional[int] = None) -> float:
+        """Return the current odds amount for a come point.
+
+        Raises:
+            IllegalAction: If target is None.
+            ValueError: If target is not a valid point number.
         """
-        # TODO
-        """
+        if target is None:
+            raise IllegalAction("Cannot get odds without a target.")
+        if target not in POINTS:
+            raise ValueError(f"'target' must be one of: {POINTS}. Got: {target}")
         return self._odds[target]
 
     def _clear_pending(self):
-        self._stake_pending = 0
-    
+        """Reset the pending come bet stake to zero."""
+        self._pending_stake = 0.0
+
     def _clear_target(self, target: int):
+        """Reset stake and odds for a specific come point."""
         if target not in POINTS:
             raise ValueError(f"Tried to clear come bets on invalid target: {target}")
-        self._stake[target] = 0
-        self._odds[target] = 0
+        self._stake[target] = 0.0
+        self._odds[target] = 0.0
 
     def _clear_all(self):
+        """Reset all come bets, odds, and pending stake."""
         for target in POINTS:
             self._clear_target(target)
         self._clear_pending()
-    
+
     def _move_pending(self, target: int):
+        """Move the pending come bet to an established come point."""
         if target not in POINTS:
             raise ValueError(f"Tried to move come pending to an invalid target: {target}")
         self._stake[target] = self._pending_stake
