@@ -76,6 +76,9 @@ class TestGettersAndSetters:
     def test_set_and_get_bet_stake_works(self, state: TableState):
         state.set_bet_stake('dummy', 30.0, target=6)
         assert state.get_bet_stake('dummy', target=6) == 30.0
+        assert state.get_bankroll().get_size() == 170.0
+        state.set_bet_stake('dummy', 15.0, target=6)
+        assert state.get_bankroll().get_size() == 185.0
 
     def test_set_bet_stake_errors_if_not_enough_funds(self, state: TableState):
         with pytest.raises(InsufficientFunds):
@@ -84,6 +87,9 @@ class TestGettersAndSetters:
     def test_set_and_get_bet_odds_works(self, state: TableState):
         state.set_bet_odds('dummy', 30.0, target=6)
         assert state.get_bet_odds('dummy', target=6) == 30.0
+        assert state.get_bankroll().get_size() == 170.0
+        state.set_bet_odds('dummy', 15.0, target=6)
+        assert state.get_bankroll().get_size() == 185.0
 
     def test_set_bet_odds_errors_if_not_enough_funds(self, state: TableState):
         with pytest.raises(InsufficientFunds):

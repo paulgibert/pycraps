@@ -62,7 +62,7 @@ class TableState:
         return self.bets[key].get_stake(target=target)
 
     def set_bet_odds(self, key: str, amount: int, target: Optional[int]=None) -> int:
-        curr = self.get_bet_stake(key, target=target)
+        curr = self.get_bet_odds(key, target=target)
         delta = curr - amount
         self._bankroll.update(delta)
         self.bets[key].set_odds(amount, target=target)
