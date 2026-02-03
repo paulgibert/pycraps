@@ -70,6 +70,7 @@ class TableState:
     def get_bet_odds(self, key: str, target: Optional[int]=None) -> int:
         return self.bets[key].get_odds(target=target)
 
+    # TODO: Should this be more simply get_bankroll_size()?
     def get_bankroll(self) -> Bankroll:
         return self._bankroll
     

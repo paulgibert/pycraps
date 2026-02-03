@@ -6,7 +6,7 @@ from craps.constants import POINTS, SEVEN_OUT
 @dataclass
 class TablePhase:
     """
-    Represents the phase of the table, such as the point and value of stateful bets.
+    Represents the phase of the table, such as the point.
     """
     point: Optional[int]=None
 
