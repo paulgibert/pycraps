@@ -1,3 +1,4 @@
+# TODO: Do these need their own file?
 TRUE_ODDS = {
     4: 2/1,
     5: 3/2,

@@ -9,9 +9,7 @@ class Field(Bet):
         self._stake = 0
 
     def _settle(self, roll: Roll) -> float:
-        """
-        # TODO
-        """
+        """Settle the field bet based on the roll total."""
         total = roll.total()
         winnings = 0
         if total in [3, 4, 9, 10, 11]:
@@ -25,30 +23,22 @@ class Field(Bet):
         
     @forbids_target
     def _set_stake(self, amount: float, target: Optional[None]=None):
-        """
-        # TODO
-        """
+        """Set the stake amount for the field bet."""
         self._stake = amount
 
     @forbids_target
     def _get_stake(self, target: Optional[None]=None) -> float:
-        """
-        # TODO
-        """
+        """Get the current stake amount for the field bet."""
         return self._stake
 
     @forbids_odds__do_not_call
     def _set_odds(self, amount: float, target: Optional[None]=None):
-        """
-        # TODO
-        """
+        """Field bets do not support odds."""
         pass
 
     @forbids_odds__do_not_call
     def _get_odds(self, target: Optional[None]=None) -> float:
-        """
-        # TODO
-        """
+        """Field bets do not support odds."""
         pass
 
     def _clear(self):

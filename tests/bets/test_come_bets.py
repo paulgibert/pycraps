@@ -95,7 +95,7 @@ class TestPointOn:
 
     def test_set_stake_with_target_errors(self, point_on_6: TablePhase):
         come = ComeBets(point_on_6)
-        with pytest.raises(IllegalAction):
+        with pytest.raises(ValueError):
             come.set_stake(30.0, target=6)
 
     @pytest.mark.parametrize("roll", POINT_ROLLS)

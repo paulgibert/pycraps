@@ -9,32 +9,24 @@ class Bet(ABC):
         self._phase = init_phase
     
     def set_stake(self, amount: float, target: Optional[None]=None):
-        """
-        # TODO
-        """
+        """Set the stake amount for this bet."""
         if amount < 0.0:
             raise ValueError(f"Cannot set negative stake amount.")
         self._set_stake(amount, target=target)
     
     def get_stake(self, target: Optional[None]=None) -> float:
-        """
-        # TODO
-        """
+        """Get the current stake amount for this bet."""
         # No additional logic here. Just abstracting to _get_stake() for API consitency in the child class.
         return self._get_stake(target=target)
 
     def set_odds(self, amount: float, target: Optional[None]=None):
-        """
-        # TODO
-        """
+        """Set the odds amount for this bet."""
         if amount < 0.0:
             raise ValueError(f"Cannot set negative odds amount.")
         self._set_odds(amount, target=target)
     
     def get_odds(self, target: Optional[None]=None) -> float:
-        """
-        # TODO
-        """
+        """Get the current odds amount for this bet."""
         # No additional logic here. Just abstracting to _get_odds() for API consitency in the child class.
         return self._get_odds(target=target)
     
@@ -53,30 +45,22 @@ class Bet(ABC):
     
     @abstractmethod
     def _set_stake(self, amount: float, target: Optional[None]=None):
-        """
-        # TODO
-        """
+        """Internal method to set stake. Implemented by subclasses."""
         raise NotImplementedError
 
     @abstractmethod
     def _get_stake(self, target: Optional[None]=None) -> float:
-        """
-        # TODO
-        """
+        """Internal method to get stake. Implemented by subclasses."""
         raise NotImplementedError
 
     @abstractmethod
     def _set_odds(self, amount: float, target: Optional[None]=None):
-        """
-        # TODO
-        """
+        """Internal method to set odds. Implemented by subclasses."""
         raise NotImplementedError
 
     @abstractmethod
     def _get_odds(self, target: Optional[None]=None) -> float:
-        """
-        # TODO
-        """
+        """Internal method to get odds. Implemented by subclasses."""
         raise NotImplementedError
     
     @abstractmethod

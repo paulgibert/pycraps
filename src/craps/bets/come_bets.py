@@ -3,7 +3,7 @@ from craps.phase import TablePhase
 from craps.exceptions import IllegalAction
 from craps.dice import Roll
 from craps.constants import POINTS, NATURAL_WINNERS, CRAPS, SEVEN_OUT
-from craps.bets.model import Bet
+from craps.bets.model import Bet, forbids_target
 from craps.bets.utils import TRUE_ODDS
 
 
@@ -65,6 +65,7 @@ class ComeBets(Bet):
         self._move_pending(total)
         return winnings
 
+    @forbids_target
     def _set_stake(self, amount: float, target: Optional[int] = None):
         """Place a come bet (pending).
 
@@ -76,8 +77,6 @@ class ComeBets(Bet):
         """
         if self._phase.point is None:
             raise IllegalAction("Cannot place a come bet on the come-out roll.")
-        if target is not None:
-            raise IllegalAction("Cannot set stake on a specific come point target.")
         self._pending_stake = amount
 
     def _get_stake(self, target: Optional[int] = None) -> float:

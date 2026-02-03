@@ -1,14 +1,9 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Dict
 from craps.bankroll import Bankroll
 from craps.phase import TablePhase, transition_phase
 from craps.dice import Roll
-from craps.bets import (
-    PassLine,
-    ComeBets,
-    PlaceBets,
-    Field
-)
+from craps.bets.model import Bet
 
 @dataclass
 class TableConfig:
@@ -24,7 +19,12 @@ class TableState:
     """
     Represents the current state of the table including bets and phase state.
     """
-    def __init__(self, config: TableConfig, init_bankroll: int=1000):
+    def __init__(
+            self,
+            config: TableConfig,
+            bets: Dict[str, Bet],
+            init_bankroll: float
+        ):
         # Config
         self.config = config
 
@@ -36,21 +36,16 @@ class TableState:
         self._roll_count = 0
         self._last_roll = 0
 
-        self._bets = {
-            "pass_line'": PassLine(),
-            "come_bets": ComeBets(),
-            "place_bets": PlaceBets(),
-            "field": Field()
-        }
+        # Bets
+        self.bets = bets
 
     def step(self, roll: Roll):
         """
         Progresses the simulator by one roll.
         """
-        for _, bet in self._bets.items():
-            delta, remaining = bet.settle(self._phase, roll)
-            self._bankroll.deposit(delta)
-            bet.set_stake(remaining)
+        for _, bet in self.bets.items():
+            winnings = bet.settle(roll)
+            self._bankroll.deposit(winnings)
         
         self._phase = transition_phase(self._phase, roll)
         self._roll_count += 1
@@ -74,3 +69,15 @@ class TableState:
 
     def get_bet_odds(self, key: str, target: Optional[int]=None) -> int:
         return self.bets[key].get_odds(target=target)
+
+    def get_bankroll(self) -> Bankroll:
+        return self._bankroll
+    
+    def get_phase(self) -> TablePhase:
+        return self._phase
+    
+    def get_roll_count(self) -> int:
+        return self._roll_count
+
+    def get_last_roll(self) -> Roll:
+        return self._last_roll
