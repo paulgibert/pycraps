@@ -23,6 +23,10 @@ class ComeBets(Bet):
         self._stake = {n: 0.0 for n in POINTS}
         self._odds = {n: 0.0 for n in POINTS}
 
+    @property
+    def is_prop(self) -> bool:
+        return False
+
     def set_stake_targets(self) -> Tuple[Optional[int]]:
         return (None,)
     

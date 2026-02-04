@@ -12,6 +12,10 @@ class DummyBet(Bet):
         self.stake = 0.0
         self.odds = 0.0
 
+    @property
+    def is_prop(self) -> bool:
+        return False
+
     def _settle(self, roll: Roll) -> float:
         return 0.0
 

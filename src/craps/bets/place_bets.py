@@ -22,6 +22,10 @@ class PlaceBets(Bet):
         super().__init__(init_phase)
         self._stake = {n: 0.0 for n in POINTS}
 
+    @property
+    def is_prop(self) -> bool:
+        return False
+
     def set_stake_targets(self) -> Tuple[Optional[int]]:
         return tuple(POINTS)
     

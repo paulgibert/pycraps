@@ -50,7 +50,7 @@ class CrapsEnv(gym.Env):
 
         # Determine termination
         terminated = (
-            self._state.get_bankroll().get_size() <= 0.0
+            self._state.get_bankroll_size() <= 0.0
             or action['leave'] == 1
         )
 
@@ -60,7 +60,7 @@ class CrapsEnv(gym.Env):
         info = {}
 
         self._n_steps += 1
-        self._prev_bankroll = self._state.get_bankroll().get_size()
+        self._prev_bankroll = self._state.get_bankroll_size()
 
         return observation, reward, terminated, truncated, info
 
@@ -71,7 +71,7 @@ class CrapsEnv(gym.Env):
     def _reward(self) -> float:
         # TODO: This is just a placeholder
         eps = 1e-6
-        return float(np.log((self._state.get_bankroll().get_size() + eps) / (self._prev_bankroll + eps)))
+        return float(np.log((self._state.get_bankroll_size() + eps) / (self._prev_bankroll + eps)))
 
     def _random_roll(self) -> Roll:
         dice1 = self.np_random.integers(1, 7)

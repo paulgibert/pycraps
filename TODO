@@ -1,9 +1,11 @@
 TODO:
 [x] Add an iron cross integration test
-[] Update Gym (skip reward for now)
+[x] Update Gym
+[] Casino-friendly bet multiples
+[] Enforces table_min/max, odds_max, and props_min
 [] Add Gym.render()
-[] Design reward
-[] Hook up a baseline3 agent
+[] Simple train run
+[] Design utility reward
 [] Add all bets
 [] Add a "world" integration test
 [] Add a "perfect math" integration tests
@@ -11,5 +13,3 @@ TODO:
 [] Pick a final deliverable
 
 Stretch:
-[] Engine enforces casino-friendly bet multiples
-[] Engine enforces table_min/max, odds_max, and props_min

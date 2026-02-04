@@ -4,16 +4,17 @@ from craps.bankroll import Bankroll
 from craps.phase import TablePhase, transition_phase
 from craps.dice import Roll
 from craps.bets.model import Bet
+from craps.exceptions import IllegalAction
 
 @dataclass
 class TableConfig:
     """
     Represents the configuration of the table such as the table min and max bets.
     """
-    table_min: int
-    table_max: int
-    odds_max: int
-    prop_min: int
+    table_min: float
+    table_max: float
+    odds_max: float
+    prop_min: float
 
 class TableState:
     """
@@ -51,28 +52,39 @@ class TableState:
         self._roll_count += 1
         self._last_roll = roll
     
-    # Check these against table config too!
-    def set_bet_stake(self, key: str, amount: int, target: Optional[int]=None):
+    def set_bet_stake(self, key: str, amount: float, target: Optional[int]=None):
+        if amount > self.config.table_max:
+            raise IllegalAction(f"Amount {amount} is above the table max of {self.config.table_max}")
+        min_bet = self.config.prop_min if self.bets[key].is_prop else self.config.table_min
+        if amount != 0 and amount < min_bet:
+            raise IllegalAction(f"Amount {amount} is below the minimum of {min_bet}")
         curr = self.get_bet_stake(key, target=target)
         delta = curr - amount
         self._bankroll.update(delta)
         self.bets[key].set_stake(amount, target=target)
 
-    def get_bet_stake(self, key: str, target: Optional[int]=None) -> int:
+    def get_bet_stake(self, key: str, target: Optional[int]=None) -> float:
         return self.bets[key].get_stake(target=target)
 
-    def set_bet_odds(self, key: str, amount: int, target: Optional[int]=None) -> int:
-        curr = self.get_bet_odds(key, target=target)
-        delta = curr - amount
+    def set_bet_odds(self, key: str, amount: float, target: Optional[int]=None):
+        stake = self.get_bet_stake(key, target=target)
+        if amount > stake * self.config.odds_max:
+            raise IllegalAction(f"Amount {amount} exceeds the max odds ({self.config.odds_max}X). Current {key} stake is {stake}")
+        if amount > self.config.table_max:
+            raise IllegalAction(f"Amount {amount} is above the table max of {self.config.table_max}")
+        min_bet = self.config.prop_min if self.bets[key].is_prop else self.config.table_min
+        if amount != 0 and amount < min_bet:
+            raise IllegalAction(f"Amount {amount} is below the minimum of {min_bet}")
+        curr_odds = self.get_bet_odds(key, target=target)
+        delta = curr_odds - amount
         self._bankroll.update(delta)
         self.bets[key].set_odds(amount, target=target)
 
-    def get_bet_odds(self, key: str, target: Optional[int]=None) -> int:
+    def get_bet_odds(self, key: str, target: Optional[int]=None) -> float:
         return self.bets[key].get_odds(target=target)
 
-    # TODO: Should this be more simply get_bankroll_size()?
-    def get_bankroll(self) -> Bankroll:
-        return self._bankroll
+    def get_bankroll_size(self) -> float:
+        return self._bankroll.get_size()
     
     def get_phase(self) -> TablePhase:
         return self._phase

@@ -31,7 +31,7 @@ def test_iron_cross():
     state.set_bet_stake('place_bets', 15.0, target=5)
     state.set_bet_stake('place_bets', 18.0, target=6)
     state.set_bet_stake('place_bets', 18.0, target=8)
-    assert state.get_bankroll().get_size() == 134.0
+    assert state.get_bankroll_size() == 134.0
 
     # 3. Wait it out, replacing the field every turn
     state.step(Roll((3,3))) # Hit
@@ -43,17 +43,17 @@ def test_iron_cross():
     state.step(Roll((2,1))) # Hit
     state.set_bet_stake('field', 15.0)
     state.step(Roll((2,2))) # Hit and point!
-    assert state.get_bankroll().get_size() == 236.0
+    assert state.get_bankroll_size() == 236.0
 
     # 4. Wait for a new point
     state.step(Roll((2,1)))
     state.step(Roll((3,4)))
     state.step(Roll((5,3))) # Point on 8
-    assert state.get_bankroll().get_size() == 236.0
+    assert state.get_bankroll_size() == 236.0
 
     # 5. Resume the cross
     state.set_bet_stake('field', 15.0)
     state.step(Roll((3,3))) # Hit
     state.set_bet_stake('field', 15.0)
     state.step(Roll((3,4))) # Seven out! Time to leave...
-    assert state.get_bankroll().get_size() == 227.0
+    assert state.get_bankroll_size() == 227.0

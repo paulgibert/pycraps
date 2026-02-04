@@ -7,7 +7,13 @@ from craps.dice import Roll
 class Bet(ABC):
     def __init__(self, init_phase: TablePhase):
         self._phase = init_phase
-    
+
+    @property
+    @abstractmethod
+    def is_prop(self) -> bool:
+        """Return True if this is a prop bet (uses prop_min instead of table_min)."""
+        raise NotImplementedError
+
     def set_stake(self, amount: float, target: Optional[None]=None):
         """Set the stake amount for this bet."""
         if amount < 0.0:

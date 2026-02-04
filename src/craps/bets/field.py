@@ -8,6 +8,10 @@ class Field(Bet):
         super().__init__(init_phase)
         self._stake = 0
 
+    @property
+    def is_prop(self) -> bool:
+        return False
+
     def set_stake_targets(self) -> Tuple[Optional[int]]:
         return (None,)
     

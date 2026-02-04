@@ -27,7 +27,7 @@ def test_6_8_explosion():
     state.step(Roll((1,1))) # Craps :(
     state.set_bet_stake('pass_line', 15.0)
     state.step(Roll((2,2))) # Point on 4
-    assert state.get_bankroll().get_size() == 170.0
+    assert state.get_bankroll_size() == 170.0
 
     # 2. Work in come bets for a max of 3 numbers covered total. Odds on everything
     state.set_bet_odds('pass_line', 30.0) # Set pass line odds
@@ -39,15 +39,15 @@ def test_6_8_explosion():
     state.set_bet_stake('come_bets', 15.0) # Craps :( Replace the come bet
     state.step(Roll((5,5))) # Come bet goes to 10
     state.set_bet_odds('come_bets', 30.0, target=10) # Odds on the 10
-    assert state.get_bankroll().get_size() == 35.0
+    assert state.get_bankroll_size() == 35.0
 
     # 3. Wait it out, replacing come bets as they hit
     state.step(Roll((4,5))) # Hit the come 9!
     state.set_bet_stake('come_bets', 15.0) # Another come bet
-    assert state.get_bankroll().get_size() == 125.0
+    assert state.get_bankroll_size() == 125.0
     state.step(Roll((1,3))) # Hit the point! Come goes to 4.
-    assert state.get_bankroll().get_size() == 245.0
+    assert state.get_bankroll_size() == 245.0
 
     # 4. 2 big hits... Ride it out and then time to leave!
     state.step(Roll((5,2))) # Seven cleas our remaining come bets
-    assert state.get_bankroll().get_size() == 245.0
+    assert state.get_bankroll_size() == 245.0

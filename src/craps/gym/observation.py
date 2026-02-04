@@ -28,7 +28,7 @@ def build_observation_space(config: TableConfig, bets: Dict[str, Bet]) -> spaces
 
 def encode_observation(state: TableState, table_config: TableConfig, env_config: CrapsEnvConfig) -> Dict[str, Any]:
     obs = {
-        'bankroll': _encode_bankroll(state.get_bankroll().get_size(), env_config.init_bankroll),
+        'bankroll': _encode_bankroll(state.get_bankroll_size(), env_config.init_bankroll),
         'point': _encode_point(state.get_phase().point),
         'last_roll': _encode_last_roll(state.get_last_roll()),
         'roll_count': _encode_roll_count(state.get_roll_count(), env_config.max_rolls),
