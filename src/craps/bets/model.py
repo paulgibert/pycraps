@@ -44,6 +44,22 @@ class Bet(ABC):
         return result
     
     @abstractmethod
+    def set_stake_targets(self) -> Tuple[Optional[int]]:
+        raise NotImplementedError
+    
+    @abstractmethod
+    def get_stake_targets(self) -> Tuple[Optional[int]]:
+        raise NotImplementedError
+    
+    @abstractmethod
+    def set_odds_targets(self) -> Tuple[Optional[int]]:
+        raise NotImplementedError
+    
+    @abstractmethod
+    def get_odds_targets(self) -> Tuple[Optional[int]]:
+        raise NotImplementedError
+    
+    @abstractmethod
     def _set_stake(self, amount: float, target: Optional[None]=None):
         """Internal method to set stake. Implemented by subclasses."""
         raise NotImplementedError

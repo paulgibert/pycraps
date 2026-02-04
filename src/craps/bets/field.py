@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 from craps.phase import TablePhase
 from craps.dice import Roll
 from craps.bets.model import Bet, forbids_target, forbids_odds__do_not_call
@@ -7,6 +7,18 @@ class Field(Bet):
     def __init__(self, init_phase: TablePhase):
         super().__init__(init_phase)
         self._stake = 0
+
+    def set_stake_targets(self) -> Tuple[Optional[int]]:
+        return (None,)
+    
+    def get_stake_targets(self) -> Tuple[Optional[int]]:
+        return (None,)
+    
+    def set_odds_targets(self) -> Tuple[Optional[int]]:
+        return ()
+    
+    def get_odds_targets(self) -> Tuple[Optional[int]]:
+        return ()
 
     def _settle(self, roll: Roll) -> float:
         """Settle the field bet based on the roll total."""

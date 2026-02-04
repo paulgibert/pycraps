@@ -27,6 +27,18 @@ class DummyBet(Bet):
     def _get_odds(self, target: Optional[None] = None) -> float:
         return self.odds
 
+    def get_stake_targets(self):
+        return (None,)
+
+    def set_stake_targets(self):
+        return (None,)
+
+    def get_odds_targets(self):
+        return (None,)
+
+    def set_odds_targets(self):
+        return (None,)
+
 
 @pytest.fixture
 def comeout():

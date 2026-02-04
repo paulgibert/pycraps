@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 from craps.phase import TablePhase
 from craps.dice import Roll
 from craps.constants import NATURAL_WINNERS, CRAPS, SEVEN_OUT
@@ -20,6 +20,18 @@ class PassLine(Bet):
         super().__init__(init_phase)
         self._stake = 0
         self._odds = 0
+
+    def set_stake_targets(self) -> Tuple[Optional[int]]:
+        return (None,)
+    
+    def get_stake_targets(self) -> Tuple[Optional[int]]:
+        return (None,)
+    
+    def set_odds_targets(self) -> Tuple[Optional[int]]:
+        return (None,)
+    
+    def get_odds_targets(self) -> Tuple[Optional[int]]:
+        return (None,)
 
     def _settle(self, roll: Roll) -> float:
         """Settle the pass line bet for the given roll.

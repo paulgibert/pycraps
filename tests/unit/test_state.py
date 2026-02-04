@@ -14,11 +14,11 @@ class DummyBets(Bet):
         super().__init__(init_phase)
         self._stake = {n: 0.0 for n in range(2, 13)}
         self._odds = {n: 0.0 for n in range(2, 13)}
-    
+
     def _settle(self, roll: Roll):
         total = roll.total()
         return self._stake[total] + self._odds[total]
-    
+
     @requires_target(ALL_NUMBERS)
     def _set_stake(self, amount: float, target: Optional[int] = None):
         self._stake[target] = amount
@@ -34,6 +34,18 @@ class DummyBets(Bet):
     @requires_target(ALL_NUMBERS)
     def _get_odds(self, target: Optional[int] = None) -> float:
         return self._odds[target]
+
+    def get_stake_targets(self):
+        return tuple(ALL_NUMBERS)
+
+    def set_stake_targets(self):
+        return tuple(ALL_NUMBERS)
+
+    def get_odds_targets(self):
+        return tuple(ALL_NUMBERS)
+
+    def set_odds_targets(self):
+        return tuple(ALL_NUMBERS)
 
 @pytest.fixture
 def state():

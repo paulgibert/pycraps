@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 from craps.phase import TablePhase
 from craps.exceptions import IllegalAction
 from craps.dice import Roll
@@ -22,6 +22,18 @@ class ComeBets(Bet):
         self._pending_stake = 0.0
         self._stake = {n: 0.0 for n in POINTS}
         self._odds = {n: 0.0 for n in POINTS}
+
+    def set_stake_targets(self) -> Tuple[Optional[int]]:
+        return (None,)
+    
+    def get_stake_targets(self) -> Tuple[Optional[int]]:
+        return (None,) + tuple(POINTS)
+    
+    def set_odds_targets(self) -> Tuple[Optional[int]]:
+        return tuple(POINTS)
+    
+    def get_odds_targets(self) -> Tuple[Optional[int]]:
+        return tuple(POINTS)
 
     def _settle(self, roll: Roll) -> float:
         """Settle all come bets for the given roll.

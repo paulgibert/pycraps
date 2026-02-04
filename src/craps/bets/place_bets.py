@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 from craps.phase import TablePhase
 from craps.exceptions import IllegalAction
 from craps.dice import Roll
@@ -21,6 +21,18 @@ class PlaceBets(Bet):
     def __init__(self, init_phase: TablePhase):
         super().__init__(init_phase)
         self._stake = {n: 0.0 for n in POINTS}
+
+    def set_stake_targets(self) -> Tuple[Optional[int]]:
+        return tuple(POINTS)
+    
+    def get_stake_targets(self) -> Tuple[Optional[int]]:
+        return tuple(POINTS)
+    
+    def set_odds_targets(self) -> Tuple[Optional[int]]:
+        return ()
+    
+    def get_odds_targets(self) -> Tuple[Optional[int]]:
+        return ()
 
     def _settle(self, roll: Roll) -> float:
         """Settle place bets based on the roll. Off on come-out, lost on seven-out."""

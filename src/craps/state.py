@@ -34,7 +34,7 @@ class TableState:
 
         # Roll tracking
         self._roll_count = 0
-        self._last_roll = 0
+        self._last_roll = None
 
         # Bets
         self.bets = bets

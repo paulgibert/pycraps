@@ -1,8 +1,10 @@
 [project]
 name = "pycraps"
 version = "0.1.0"
+requires-python = ">=3.13"
 dependencies = [
     "gymnasium>=1.2.3",
+    "stable-baselines3>=2.7.1",
 ]
 
 [project.optional-dependencies]

@@ -1,9 +1,12 @@
 TODO:
+[x] Add an iron cross integration test
 [] Update Gym (skip reward for now)
 [] Add Gym.render()
 [] Design reward
 [] Hook up a baseline3 agent
 [] Add all bets
+[] Add a "world" integration test
+[] Add a "perfect math" integration tests
 [] Better policy visualization
 [] Pick a final deliverable
 
