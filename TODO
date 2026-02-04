@@ -13,3 +13,4 @@ TODO:
 [] Pick a final deliverable
 
 Stretch:
+[] Make the init method of Bet not require a TablePhase

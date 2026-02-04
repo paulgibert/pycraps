@@ -46,9 +46,19 @@ class BetCodec:
         self.bet = bet
         self.min_increment = min_increment
 
-    def _get_min(self) -> float:
-        """Return the minimum bet amount based on whether this is a prop bet."""
+    def _get_raw_min(self) -> float:
+        """Return the raw minimum bet amount based on whether this is a prop bet."""
         return self.config.prop_min if self.bet.is_prop else self.config.table_min
+
+    def _get_stake_min(self, target: Optional[int] = None) -> float:
+        """Return the effective stake minimum (aligned to increment)."""
+        increment = self._get_stake_increment(target=target)
+        return ceil(self._get_raw_min() / increment) * increment
+
+    def _get_odds_min(self, target: Optional[int] = None) -> float:
+        """Return the effective odds minimum (aligned to increment)."""
+        increment = self._get_odds_increment(target=target)
+        return ceil(self._get_raw_min() / increment) * increment
 
     def _get_stake_increment(self, target: Optional[int] = None) -> int:
         """Return the effective stake increment (>= min_increment, aligned with bet)."""
@@ -65,42 +75,56 @@ class BetCodec:
     def get_stake_discrete_size(self, target: Optional[int] = None) -> int:
         """Return the number of discrete stake values (for spaces.Discrete)."""
         increment = self._get_stake_increment(target=target)
-        return int((self.config.table_max - self._get_min()) / increment) + 2
+        return int((self.config.table_max - self._get_stake_min(target=target)) / increment) + 2
 
     def get_odds_discrete_size(self, target: Optional[int] = None) -> Optional[int]:
         """Return the number of discrete odds values, or None if no odds supported."""
         increment = self._get_odds_increment(target=target)
         if increment is None:
             return None
-        return int((self.config.table_max - self._get_min()) / increment) + 2
+        return int((self.config.table_max - self._get_odds_min(target=target)) / increment) + 2
 
     def stake_amount_to_discrete(self, amount: float, target: Optional[int] = None) -> int:
         """Convert a stake dollar amount to its discrete index."""
         if amount == 0:
             return 0
+        min_amt = self._get_stake_min(target=target)
         increment = self._get_stake_increment(target=target)
-        return int((amount - self._get_min()) / increment) + 1
+        if amount < min_amt or amount > self.config.table_max:
+            raise ValueError(f"Stake amount {amount} out of bounds [{min_amt}, {self.config.table_max}]")
+        if (amount - min_amt) % increment != 0:
+            raise ValueError(f"Stake amount {amount} not aligned to increment {increment}")
+        return int((amount - min_amt) / increment) + 1
 
     def odds_amount_to_discrete(self, amount: float, target: Optional[int] = None) -> int:
         """Convert an odds dollar amount to its discrete index."""
         if amount == 0:
             return 0
+        min_amt = self._get_odds_min(target=target)
         increment = self._get_odds_increment(target=target)
-        return int((amount - self._get_min()) / increment) + 1
+        if amount < min_amt or amount > self.config.table_max:
+            raise ValueError(f"Odds amount {amount} out of bounds [{min_amt}, {self.config.table_max}]")
+        if (amount - min_amt) % increment != 0:
+            raise ValueError(f"Odds amount {amount} not aligned to increment {increment}")
+        return int((amount - min_amt) / increment) + 1
 
     def stake_discrete_to_amount(self, x: int, target: Optional[int] = None) -> float:
         """Convert a discrete index to a stake dollar amount."""
+        if x < 0 or x >= self.get_stake_discrete_size(target=target):
+            raise ValueError(f"Stake index {x} out of bounds [0, {self.get_stake_discrete_size(target=target) - 1}]")
         if x == 0:
             return 0.0
         increment = self._get_stake_increment(target=target)
-        return self._get_min() + (x - 1) * increment
+        return self._get_stake_min(target=target) + (x - 1) * increment
 
     def odds_discrete_to_amount(self, x: int, target: Optional[int] = None) -> float:
         """Convert a discrete index to an odds dollar amount."""
+        if x < 0 or x >= self.get_odds_discrete_size(target=target):
+            raise ValueError(f"Odds index {x} out of bounds [0, {self.get_odds_discrete_size(target=target) - 1}]")
         if x == 0:
             return 0.0
         increment = self._get_odds_increment(target=target)
-        return self._get_min() + (x - 1) * increment
+        return self._get_odds_min(target=target) + (x - 1) * increment
 
 
 class SpaceCodec:
