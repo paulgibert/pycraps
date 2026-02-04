@@ -3,7 +3,7 @@ from craps.phase import TablePhase
 from craps.exceptions import IllegalAction
 from craps.dice import Roll
 from craps.constants import POINTS, NATURAL_WINNERS, CRAPS, SEVEN_OUT
-from craps.bets.model import Bet, requires_target, forbids_odds__do_not_call
+from craps.bets.model import Bet, requires_target, forbids_target, forbids_odds__do_not_call
 from craps.bets.utils import TRUE_ODDS
 
 PLACE_ODDS = {
@@ -13,6 +13,15 @@ PLACE_ODDS = {
     8: 7/6,
     9: 7/5,
     10: 9/5
+}
+
+PLACE_INCREMENT = {
+    4: 5,   # 9:5 payout
+    5: 5,   # 7:5 payout
+    6: 6,   # 7:6 payout
+    8: 6,   # 7:6 payout
+    9: 5,   # 7:5 payout
+    10: 5,  # 9:5 payout
 }
 
 class PlaceBets(Bet):
@@ -37,6 +46,14 @@ class PlaceBets(Bet):
     
     def get_odds_targets(self) -> Tuple[Optional[int]]:
         return ()
+
+    @requires_target(POINTS)
+    def get_stake_increment(self, target: Optional[int] = None) -> int:
+        return PLACE_INCREMENT[target]
+
+    @forbids_target
+    def get_odds_increment(self, target: Optional[int] = None) -> Optional[int]:
+        return None
 
     def _settle(self, roll: Roll) -> float:
         """Settle place bets based on the roll. Off on come-out, lost on seven-out."""

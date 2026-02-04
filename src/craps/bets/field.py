@@ -24,6 +24,14 @@ class Field(Bet):
     def get_odds_targets(self) -> Tuple[Optional[int]]:
         return ()
 
+    @forbids_target
+    def get_stake_increment(self, target: Optional[int] = None) -> int:
+        return 1
+
+    @forbids_target
+    def get_odds_increment(self, target: Optional[int] = None) -> Optional[int]:
+        return None
+
     def _settle(self, roll: Roll) -> float:
         """Settle the field bet based on the roll total."""
         total = roll.total()

@@ -3,8 +3,8 @@ from craps.phase import TablePhase
 from craps.exceptions import IllegalAction
 from craps.dice import Roll
 from craps.constants import POINTS, NATURAL_WINNERS, CRAPS, SEVEN_OUT
-from craps.bets.model import Bet, forbids_target
-from craps.bets.utils import TRUE_ODDS
+from craps.bets.model import Bet, forbids_target, requires_target
+from craps.bets.utils import TRUE_ODDS, TRUE_ODDS_INCREMENT
 
 
 class ComeBets(Bet):
@@ -38,6 +38,14 @@ class ComeBets(Bet):
     
     def get_odds_targets(self) -> Tuple[Optional[int]]:
         return tuple(POINTS)
+
+    @forbids_target
+    def get_stake_increment(self, target: Optional[int] = None) -> int:
+        return 1
+
+    @requires_target(POINTS)
+    def get_odds_increment(self, target: Optional[int] = None) -> Optional[int]:
+        return TRUE_ODDS_INCREMENT[target]
 
     def _settle(self, roll: Roll) -> float:
         """Settle all come bets for the given roll.

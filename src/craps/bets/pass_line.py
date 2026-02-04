@@ -1,9 +1,9 @@
 from typing import Optional, Tuple
 from craps.phase import TablePhase
 from craps.dice import Roll
-from craps.constants import NATURAL_WINNERS, CRAPS, SEVEN_OUT
-from craps.bets.model import Bet, forbids_target
-from craps.bets.utils import TRUE_ODDS
+from craps.constants import NATURAL_WINNERS, CRAPS, SEVEN_OUT, POINTS
+from craps.bets.model import Bet, forbids_target, requires_target
+from craps.bets.utils import TRUE_ODDS, TRUE_ODDS_INCREMENT
 from craps.exceptions import IllegalAction
 
 
@@ -36,6 +36,14 @@ class PassLine(Bet):
     
     def get_odds_targets(self) -> Tuple[Optional[int]]:
         return (None,)
+
+    @forbids_target
+    def get_stake_increment(self, target: Optional[int] = None) -> int:
+        return 1
+
+    @requires_target(POINTS)
+    def get_odds_increment(self, target: Optional[int] = None) -> Optional[int]:
+        return TRUE_ODDS_INCREMENT[target]
 
     def _settle(self, roll: Roll) -> float:
         """Settle the pass line bet for the given roll.

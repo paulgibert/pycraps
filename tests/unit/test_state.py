@@ -51,6 +51,14 @@ class DummyBets(Bet):
     def set_odds_targets(self):
         return tuple(ALL_NUMBERS)
 
+    @requires_target(ALL_NUMBERS)
+    def get_stake_increment(self, target: Optional[int] = None) -> int:
+        return 1
+
+    @requires_target(ALL_NUMBERS)
+    def get_odds_increment(self, target: Optional[int] = None) -> Optional[int]:
+        return 1
+
 
 class DummyPropBet(Bet):
     """A dummy prop bet implementation for testing TableState."""
@@ -94,6 +102,14 @@ class DummyPropBet(Bet):
 
     def set_odds_targets(self):
         return tuple(ALL_NUMBERS)
+
+    @requires_target(ALL_NUMBERS)
+    def get_stake_increment(self, target: Optional[int] = None) -> int:
+        return 1
+
+    @requires_target(ALL_NUMBERS)
+    def get_odds_increment(self, target: Optional[int] = None) -> Optional[int]:
+        return 1
 
 
 @pytest.fixture
