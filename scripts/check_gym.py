@@ -16,7 +16,8 @@ def main():
     env_config = CrapsEnvConfig(
         init_bankroll=1000.0,
         max_rolls=100,
-        max_steps=100
+        max_steps=100,
+        min_increment=5
     )
     table_config = TableConfig(
         table_min=10,

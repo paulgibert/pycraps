@@ -32,10 +32,10 @@ class PassLine(Bet):
         return (None,)
     
     def set_odds_targets(self) -> Tuple[Optional[int]]:
-        return (None,)
-    
+        return tuple(POINTS)
+
     def get_odds_targets(self) -> Tuple[Optional[int]]:
-        return (None,)
+        return tuple(POINTS)
 
     @forbids_target
     def get_stake_increment(self, target: Optional[int] = None) -> int:
@@ -102,26 +102,34 @@ class PassLine(Bet):
         """Return the current flat pass line wager."""
         return self._stake
 
-    @forbids_target
-    def _set_odds(self, amount: float, target: Optional[None] = None):
+    @requires_target(POINTS)
+    def _set_odds(self, amount: float, target: Optional[int] = None):
         """Set the odds bet behind the pass line.
 
-        Odds can only be placed after a point is established and require an
-        existing flat stake. Calling this again replaces the previous odds amount.
+        Odds can only be placed after a point is established, must match
+        the current point, and require an existing flat stake.
 
         Raises:
-            IllegalAction: If no point is established or no flat stake exists.
+            IllegalAction: If no point is established, target doesn't match
+                the current point, or no flat stake exists.
         """
         if self._phase.point is None:
             raise IllegalAction("Cannot set odds during come-out phase.")
+        if target != self._phase.point:
+            raise IllegalAction(f"Cannot set odds on {target} when point is {self._phase.point}.")
         if self._stake == 0:
             raise IllegalAction("Cannot set odds without a pass line stake.")
         self._odds = amount
 
-    @forbids_target
-    def _get_odds(self, target: Optional[None] = None) -> float:
-        """Return the current odds bet amount."""
-        return self._odds
+    @requires_target(POINTS)
+    def _get_odds(self, target: Optional[int] = None) -> float:
+        """Return the odds bet amount for the given target.
+
+        Returns the odds if target matches the current point, otherwise 0.
+        """
+        if self._phase.point == target:
+            return self._odds
+        return 0.0
 
     def _clear(self):
         """Reset stake and odds to zero after the bet resolves."""

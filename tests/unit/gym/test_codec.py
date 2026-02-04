@@ -240,3 +240,5 @@ class TestBetCodec:
     def test_odds_discrete_to_amount(self, codec: BetCodec, x: int):
         with pytest.raises(ValueError):
             assert codec.odds_discrete_to_amount(x, target=4)
+
+# TODO: Add SpaceCodec tests

@@ -1,4 +1,5 @@
 from typing import Optional, Any, Tuple, Dict
+from dataclasses import asdict
 import gymnasium as gym
 import numpy as np
 from craps.bets.model import Bet
@@ -7,7 +8,11 @@ from craps.dice import Roll
 from craps.exceptions import IllegalAction, InsufficientFunds
 from craps.gym.config import CrapsEnvConfig
 from craps.gym.codec import SpaceCodec
-
+from craps.gym.render import (
+    snapshot_table_state,
+    snapshot_bet_observation,
+    snapshot_bet_action
+)
 
 class CrapsEnv(gym.Env):
     def __init__(self, env_config: CrapsEnvConfig, table_config: TableConfig, bets: Dict[str, Bet]):
@@ -59,7 +64,22 @@ class CrapsEnv(gym.Env):
         return observation, reward, terminated, truncated, {}
 
     def render(self):
-        pass
+        snap = {
+            "table_config": asdict(self._table_config),
+            "env_config": asdict(self._env_config),
+        }
+
+        snap.update(snapshot_table_state(self._state))
+
+        snap["observation"] = {}
+        for name, bet in self._state.bets:
+            snap["observation"].update(snapshot_bet_observation(name, bet))
+        
+        snap["action"] = {}
+        for name, bet in self._state.bets:
+            snap["action"].update(snapshot_bet_action(name, bet))
+
+        return snap
 
     def _apply_action(self, action: Any):
         for bet_name, bet_type, amount, target in self._codec.decode_action(action):

@@ -67,7 +67,10 @@ class TableState:
         return self.bets[key].get_stake(target=target)
 
     def set_bet_odds(self, key: str, amount: float, target: Optional[int]=None):
-        stake = self.get_bet_stake(key, target=target)
+        # Use target for stake lookup if it's in get_stake_targets, else None
+        stake_targets = self.bets[key].get_stake_targets()
+        stake_target = target if target in stake_targets else None
+        stake = self.get_bet_stake(key, target=stake_target)
         if amount > stake * self.config.odds_max:
             raise IllegalAction(f"Amount {amount} exceeds the max odds ({self.config.odds_max}X). Current {key} stake is {stake}")
         if amount > self.config.table_max:

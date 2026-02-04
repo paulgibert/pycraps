@@ -1,8 +1,8 @@
 TODO:
 [x] Add an iron cross integration test
 [x] Update Gym
-[] Casino-friendly bet multiples
-[] Enforces table_min/max, odds_max, and props_min
+[x] Casino-friendly bet multiples
+[x] Enforces table_min/max, odds_max, and props_min
 [] Add Gym.render()
 [] Simple train run
 [] Design utility reward
@@ -14,3 +14,4 @@ TODO:
 
 Stretch:
 [] Make the init method of Bet not require a TablePhase
+[] Add SpaceCodec tests below BetCodec tests

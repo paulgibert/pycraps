@@ -30,7 +30,7 @@ def test_6_8_explosion():
     assert state.get_bankroll_size() == 170.0
 
     # 2. Work in come bets for a max of 3 numbers covered total. Odds on everything
-    state.set_bet_odds('pass_line', 30.0) # Set pass line odds
+    state.set_bet_odds('pass_line', 30.0, target=4) # Set pass line odds
     state.set_bet_stake('come_bets', 15.0) # Work in a come bet
     state.step(Roll((4,5))) # Come bet goes to 9
     state.set_bet_odds('come_bets', 30.0, target=9) # Odds on the 9
