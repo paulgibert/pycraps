@@ -1,5 +1,6 @@
 from typing import Optional, Any, Tuple, Dict
 from dataclasses import asdict
+from copy import deepcopy
 import gymnasium as gym
 import numpy as np
 from craps.bets.model import Bet
@@ -42,12 +43,15 @@ class CrapsEnv(gym.Env):
 
     def step(self, action: Any) -> Tuple[Any, float, bool, bool, Dict[str, Any]]:
         # Apply bets to table state
+        prev_state = deepcopy(self._state)
         try:
             self._apply_action(action)
         except (IllegalAction, InsufficientFunds):
             # TODO: Consider different feedback based on the error type
-            return self._codec.encode_observation(self._state), -1.0, True, False, {}
-
+            self._state = prev_state
+            self._n_steps += 1
+            return self._codec.encode_observation(self._state), -0.1, False, False, {}
+        
         # Roll and progress the table state
         roll = self._random_roll()
         self._state.step(roll)
@@ -63,6 +67,9 @@ class CrapsEnv(gym.Env):
 
         return observation, reward, terminated, truncated, {}
 
+    def action_masks(self) -> Dict[str, np.ndarray]:
+        return self._codec.build_action_mask(self._state)
+
     def render(self):
         snap = {
             "table_config": asdict(self._table_config),
@@ -72,11 +79,11 @@ class CrapsEnv(gym.Env):
         snap.update(snapshot_table_state(self._state))
 
         snap["observation"] = {}
-        for name, bet in self._state.bets:
+        for name, bet in self._state.bets.items():
             snap["observation"].update(snapshot_bet_observation(name, bet))
         
         snap["action"] = {}
-        for name, bet in self._state.bets:
+        for name, bet in self._state.bets.items():
             snap["action"].update(snapshot_bet_action(name, bet))
 
         return snap

@@ -27,7 +27,7 @@ class TestComeout:
     def test_set_stake_errors(self, comeout: TablePhase):
         come = ComeBets(comeout)
         with pytest.raises(IllegalAction):
-            come.set_stake(0.0)
+            come.set_stake(30.0)
 
     def test_set_odds_errors(self, comeout: TablePhase):
         come = ComeBets(comeout)

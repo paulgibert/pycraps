@@ -3,8 +3,9 @@ TODO:
 [x] Update Gym
 [x] Casino-friendly bet multiples
 [x] Enforces table_min/max, odds_max, and props_min
-[] Add Gym.render()
-[] Simple train run
+[x] Add Gym.render()
+[x] Simple train run
+[x] Add a action mask
 [] Design utility reward
 [] Add all bets
 [] Add a "world" integration test

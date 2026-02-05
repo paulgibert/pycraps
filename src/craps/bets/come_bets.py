@@ -39,13 +39,21 @@ class ComeBets(Bet):
     def get_odds_targets(self) -> Tuple[Optional[int]]:
         return tuple(POINTS)
 
-    @forbids_target
     def get_stake_increment(self, target: Optional[int] = None) -> int:
         return 1
 
     @requires_target(POINTS)
     def get_odds_increment(self, target: Optional[int] = None) -> Optional[int]:
         return TRUE_ODDS_INCREMENT[target]
+
+    @forbids_target
+    def can_set_stake(self, target=None) -> bool:
+        return self._phase.point is not None
+
+    def can_set_odds(self, target=None) -> bool:
+        if target is None or target not in POINTS:
+            return False
+        return self._stake[target] > 0
 
     def _settle(self, roll: Roll) -> float:
         """Settle all come bets for the given roll.
@@ -99,7 +107,7 @@ class ComeBets(Bet):
         Raises:
             IllegalAction: If called during come-out or with a specific target.
         """
-        if self._phase.point is None:
+        if amount > 0 and not self.can_set_stake():
             raise IllegalAction("Cannot place a come bet on the come-out roll.")
         self._pending_stake = amount
 
@@ -131,7 +139,7 @@ class ComeBets(Bet):
             raise IllegalAction("Cannot set odds without a target.")
         if target not in POINTS:
             raise ValueError(f"'target' must be one of: {POINTS}. Got: {target}")
-        if self._stake[target] == 0:
+        if amount > 0 and not self.can_set_odds(target=target):
             raise IllegalAction(f"No come bet on {target}.")
         self._odds[target] = amount
 

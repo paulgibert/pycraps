@@ -32,6 +32,14 @@ class Field(Bet):
     def get_odds_increment(self, target: Optional[int] = None) -> Optional[int]:
         return None
 
+    @forbids_target
+    def can_set_stake(self, target=None) -> bool:
+        return True
+
+    @forbids_target
+    def can_set_odds(self, target=None) -> bool:
+        return False
+
     def _settle(self, roll: Roll) -> float:
         """Settle the field bet based on the roll total."""
         total = roll.total()

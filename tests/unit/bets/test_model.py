@@ -51,6 +51,12 @@ class DummyBet(Bet):
     def get_odds_increment(self, target: Optional[int] = None) -> Optional[int]:
         return 1
 
+    def can_set_stake(self, target=None) -> bool:
+        return True
+
+    def can_set_odds(self, target=None) -> bool:
+        return True
+
 
 @pytest.fixture
 def comeout():

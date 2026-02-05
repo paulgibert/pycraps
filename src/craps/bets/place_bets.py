@@ -55,6 +55,13 @@ class PlaceBets(Bet):
     def get_odds_increment(self, target: Optional[int] = None) -> Optional[int]:
         return None
 
+    @requires_target(POINTS)
+    def can_set_stake(self, target=None) -> bool:
+        return self._phase.point is not None
+
+    def can_set_odds(self, target=None) -> bool:
+        return False
+
     def _settle(self, roll: Roll) -> float:
         """Settle place bets based on the roll. Off on come-out, lost on seven-out."""
         total = roll.total()
@@ -75,7 +82,7 @@ class PlaceBets(Bet):
     @requires_target(POINTS)
     def _set_stake(self, amount: float, target: Optional[int] = None):
         """Set the stake for a specific point number."""
-        if self._phase.point is None:
+        if amount > 0 and not self.can_set_stake(target=target):
             raise IllegalAction(f"Cannot adjust place bets on the come-out.")
         self._stake[target] = amount
 

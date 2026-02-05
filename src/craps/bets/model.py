@@ -76,6 +76,16 @@ class Bet(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def can_set_stake(self, target: Optional[int] = None) -> bool:
+        """Whether a stake can be set for this target in the current state."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def can_set_odds(self, target: Optional[int] = None) -> bool:
+        """Whether odds can be set for this target in the current state."""
+        raise NotImplementedError
+
+    @abstractmethod
     def _set_stake(self, amount: float, target: Optional[None]=None):
         """Internal method to set stake. Implemented by subclasses."""
         raise NotImplementedError

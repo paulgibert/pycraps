@@ -1,3 +1,4 @@
+import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
 
@@ -16,3 +17,7 @@ class FlattenActionWrapper(gym.ActionWrapper):
     def action(self, action):
         # Convert MultiDiscrete array back to Dict
         return {k: int(action[i]) for i, k in enumerate(self._action_keys)}
+
+    def action_masks(self) -> np.ndarray:
+        masks = self.env.action_masks()
+        return np.concatenate([masks[k] for k in self._action_keys])

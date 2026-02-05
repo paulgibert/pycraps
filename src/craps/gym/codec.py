@@ -180,11 +180,11 @@ class SpaceCodec:
         for name, bet in self._bets.items():
             codec = self._codecs[name]
             for tgt in bet.set_stake_targets():
-                actions[f'stake.{name}.{tgt}'] = spaces.Discrete(
+                actions[f'stake-{name}-{tgt}'] = spaces.Discrete(
                     codec.get_stake_discrete_size(target=tgt)
                 )
             for tgt in bet.set_odds_targets():
-                actions[f'odds.{name}.{tgt}'] = spaces.Discrete(
+                actions[f'odds-{name}-{tgt}'] = spaces.Discrete(
                     codec.get_odds_discrete_size(target=tgt)
                 )
 
@@ -201,15 +201,47 @@ class SpaceCodec:
         for name, bet in self._bets.items():
             codec = self._codecs[name]
             for tgt in bet.get_stake_targets():
-                obs[f'stake.{name}.{tgt}'] = spaces.Discrete(
+                obs[f'stake-{name}-{tgt}'] = spaces.Discrete(
                     codec.get_stake_discrete_size(target=tgt)
                 )
             for tgt in bet.get_odds_targets():
-                obs[f'odds.{name}.{tgt}'] = spaces.Discrete(
+                obs[f'odds-{name}-{tgt}'] = spaces.Discrete(
                     codec.get_odds_discrete_size(target=tgt)
                 )
 
         return spaces.Dict(obs)
+
+    def build_action_mask(self, state: TableState) -> Dict[str, np.ndarray]:
+        """Build per-key action masks based on game state.
+
+        For each action key, returns a boolean array of length N (matching
+        Discrete(N)). Index 0 ($0 / no bet) is always valid. Other indices
+        are valid only if the bet is currently accepting wagers.
+        """
+        masks = {'leave': np.ones(2, dtype=np.int8)}
+
+        for key in self._action_space.spaces:
+            if key == 'leave':
+                continue
+
+            bet_type, bet_name, target_str = key.split('-')
+            target = None if target_str == 'None' else int(target_str)
+            bet = state.bets[bet_name]
+
+            if bet_type == 'stake':
+                is_on = bet.can_set_stake(target=target)
+            else:
+                is_on = bet.can_set_odds(target=target)
+
+            size = self._action_space.spaces[key].n
+            if is_on:
+                mask = np.ones(size, dtype=np.int8)
+            else:
+                mask = np.zeros(size, dtype=np.int8)
+                mask[0] = 1  # index 0 ($0 / no bet) is always valid
+            masks[key] = mask
+
+        return masks
 
     def decode_action(self, action: Dict) -> Iterator[Tuple[str, str, float, Optional[int]]]:
         """Decode a gym action dict into bet operations.
@@ -222,7 +254,7 @@ class SpaceCodec:
             if key == 'leave':
                 continue
 
-            parts = key.split('.')
+            parts = key.split('-')
             bet_type, bet_name, target_str = parts[0], parts[1], parts[2]
             target = None if target_str == 'None' else int(target_str)
 
@@ -247,12 +279,12 @@ class SpaceCodec:
             codec = self._codecs[name]
             for tgt in bet.get_stake_targets():
                 amount = bet.get_stake(target=tgt)
-                obs[f'stake.{name}.{tgt}'] = np.int64(
+                obs[f'stake-{name}-{tgt}'] = np.int64(
                     codec.stake_amount_to_discrete(amount, target=tgt)
                 )
             for tgt in bet.get_odds_targets():
                 amount = bet.get_odds(target=tgt)
-                obs[f'odds.{name}.{tgt}'] = np.int64(
+                obs[f'odds-{name}-{tgt}'] = np.int64(
                     codec.odds_amount_to_discrete(amount, target=tgt)
                 )
 

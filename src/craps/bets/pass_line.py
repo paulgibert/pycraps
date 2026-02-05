@@ -45,6 +45,16 @@ class PassLine(Bet):
     def get_odds_increment(self, target: Optional[int] = None) -> Optional[int]:
         return TRUE_ODDS_INCREMENT[target]
 
+    @forbids_target
+    def can_set_stake(self, target=None) -> bool:
+        return self._phase.point is None
+
+    @requires_target(POINTS)
+    def can_set_odds(self, target=None) -> bool:
+        return (self._phase.point is not None
+                and target == self._phase.point
+                and self._stake > 0)
+
     def _settle(self, roll: Roll) -> float:
         """Settle the pass line bet for the given roll.
 
@@ -93,7 +103,7 @@ class PassLine(Bet):
         Raises:
             IllegalAction: If a point is already established.
         """
-        if self._phase.point is not None:
+        if amount > 0 and not self.can_set_stake():
             raise IllegalAction("Cannot set stake during point phase.")
         self._stake = amount
 
@@ -113,12 +123,8 @@ class PassLine(Bet):
             IllegalAction: If no point is established, target doesn't match
                 the current point, or no flat stake exists.
         """
-        if self._phase.point is None:
-            raise IllegalAction("Cannot set odds during come-out phase.")
-        if target != self._phase.point:
-            raise IllegalAction(f"Cannot set odds on {target} when point is {self._phase.point}.")
-        if self._stake == 0:
-            raise IllegalAction("Cannot set odds without a pass line stake.")
+        if amount > 0 and not self.can_set_odds(target=target):
+            raise IllegalAction("Cannot set odds in the current state.")
         self._odds = amount
 
     @requires_target(POINTS)

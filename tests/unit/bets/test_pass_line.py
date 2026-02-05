@@ -111,7 +111,7 @@ class TestSettlePointOn:
 
     def test_set_stake_errors_during_point(self, pass_line_on_6: PassLine):
         with pytest.raises(IllegalAction):
-            pass_line_on_6.set_stake(0.0)
+            pass_line_on_6.set_stake(30.0)
 
     def test_set_odds_with_wrong_target_errors(self, pass_line_on_6: PassLine):
         with pytest.raises(IllegalAction):
