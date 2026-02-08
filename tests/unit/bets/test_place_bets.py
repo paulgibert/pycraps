@@ -107,3 +107,13 @@ def test_get_odds_always_errors(point_on_6: TablePhase):
     place = PlaceBets(point_on_6)
     with pytest.raises(RuntimeError):
         place.get_odds(target=6)
+
+
+def test_reset_clears_all_stakes(point_on_6: TablePhase):
+    place = PlaceBets(point_on_6)
+    for tgt in POINTS:
+        place.set_stake(30.0, target=tgt)
+    place.reset()
+    for tgt in POINTS:
+        assert place.get_stake(target=tgt) == 0.0
+    assert place._phase.point is None

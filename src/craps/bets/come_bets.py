@@ -79,7 +79,7 @@ class ComeBets(Bet):
             # Pending come bet wins (7 is a natural), but all established
             # come bets and odds are lost.
             winnings = self._pending_stake * 2.0
-            self._clear_all()
+            self._clear()
             return winnings
 
         if total in NATURAL_WINNERS:
@@ -167,7 +167,7 @@ class ComeBets(Bet):
         self._stake[target] = 0.0
         self._odds[target] = 0.0
 
-    def _clear_all(self):
+    def _clear(self):
         """Reset all come bets, odds, and pending stake."""
         for target in POINTS:
             self._clear_target(target)

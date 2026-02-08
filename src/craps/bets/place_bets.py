@@ -70,7 +70,7 @@ class PlaceBets(Bet):
             return 0.0
 
         if total == SEVEN_OUT:
-            self._clear_all()
+            self._clear()
             return 0.0
 
         if total in POINTS:
@@ -99,7 +99,7 @@ class PlaceBets(Bet):
     def _get_odds(self, target: Optional[int] = None) -> float:
         pass
 
-    def _clear_all(self):
+    def _clear(self):
         """Clear the state on all place bets."""
         for target in POINTS:
             self._stake[target] = 0.0

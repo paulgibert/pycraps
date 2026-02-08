@@ -1,4 +1,6 @@
 from sb3_contrib import MaskablePPO
+import wandb
+from wandb.integration.sb3 import WandbCallback
 from craps.gym.env import CrapsEnv
 from craps.gym.config import CrapsEnvConfig
 from craps.gym.wrappers import FlattenActionWrapper, CPTBuffer, CPTRewardWrapper
@@ -40,8 +42,16 @@ def main():
     model = MaskablePPO("MultiInputPolicy", env, verbose=1)
 
     # Train agent
-    model.learn(100_000)
-    model.save(f'model_ppo')
+    wandb.init(project="craps-rl")
+    model.learn(
+        5_000_000,
+        callback=WandbCallback(
+            gradient_save_freq=1000,
+            model_save_path="models/",
+            model_save_freq=50_000,
+            verbose=2
+        )
+    )
 
 if __name__ == '__main__':
     main()

@@ -38,6 +38,8 @@ class CrapsEnv(gym.Env):
         super().reset(seed=seed)
         self._n_steps = 0
         self._prev_bankroll = self._env_config.init_bankroll
+        for bet in self._bets.values():
+            bet.reset()
         self._state = TableState(self._table_config, self._bets, self._env_config.init_bankroll)
         return self._codec.encode_observation(self._state), {}
 
@@ -65,7 +67,11 @@ class CrapsEnv(gym.Env):
         self._n_steps += 1
         self._prev_bankroll = self._state.get_bankroll_size()
 
-        return observation, reward, terminated, truncated, {}
+        info = {}
+        if terminated or truncated:
+            info["terminal_bankroll"] = self._state.get_bankroll_size()
+        
+        return observation, reward, terminated, truncated, info
 
     def action_masks(self) -> Dict[str, np.ndarray]:
         return self._codec.build_action_mask(self._state)

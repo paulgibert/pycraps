@@ -61,7 +61,7 @@ class CPTRewardWrapper(gym.Wrapper):
     def step(self, action):
         obs, reward, done, trunc, info = self.env.step(action)
 
-        if done:
+        if done or trunc:
             bankroll = info["terminal_bankroll"]
             self.buffer.add(bankroll)
             new_cpt = self.buffer.utility()

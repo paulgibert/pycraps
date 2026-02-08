@@ -19,6 +19,10 @@ class DummyBet(Bet):
     def _settle(self, roll: Roll) -> float:
         return 0.0
 
+    def _clear(self):
+        self.stake = 0.0
+        self.odds = 0.0
+
     def _set_stake(self, amount: float, target: Optional[None] = None):
         self.stake = amount
 
@@ -109,6 +113,28 @@ class TestBetBase:
         bet = DummyBet(TablePhase(point=6))
         bet.settle(Roll((2, 2)))
         assert bet._phase.point == 6
+
+
+class TestReset:
+    def test_reset_clears_wager_state(self, comeout: TablePhase):
+        bet = DummyBet(comeout)
+        bet.set_stake(50.0)
+        bet.set_odds(100.0)
+        bet.reset()
+        assert bet.get_stake() == 0.0
+        assert bet.get_odds() == 0.0
+
+    def test_reset_resets_phase_to_comeout(self):
+        bet = DummyBet(TablePhase(point=6))
+        bet.reset()
+        assert bet._phase.point is None
+
+    def test_reset_resets_phase_after_settlement(self, comeout: TablePhase):
+        bet = DummyBet(comeout)
+        bet.settle(Roll((2, 2)))  # establishes point=4
+        assert bet._phase.point == 4
+        bet.reset()
+        assert bet._phase.point is None
 
 
 class TestRequiresTarget:

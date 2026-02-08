@@ -183,3 +183,21 @@ class TestPointOn:
         come = ComeBets(point_on_6)
         with pytest.raises(ValueError):
             come.get_odds(target=3)
+
+
+class TestReset:
+    def test_reset_clears_all_state(self, point_on_6: TablePhase):
+        come = ComeBets(point_on_6)
+        # Place pending, move to points, add odds
+        come.set_stake(30.0)
+        come.settle(Roll((2, 2)))  # moves to 4
+        come.set_odds(60.0, target=4)
+        come.set_stake(25.0)  # new pending
+
+        come.reset()
+
+        assert come.get_stake(target=None) == 0.0
+        for tgt in POINTS:
+            assert come.get_stake(target=tgt) == 0.0
+            assert come.get_odds(target=tgt) == 0.0
+        assert come._phase.point is None

@@ -6,7 +6,10 @@ dependencies = [
     "gymnasium>=1.2.3",
     "sb3-contrib>=2.7.1",
     "stable-baselines3>=2.7.1",
+    "tensorboard>=2.20.0",
+    "wandb>=0.24.2",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest", "hypothesis"]
+

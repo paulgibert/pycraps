@@ -19,6 +19,11 @@ class DummyBet(Bet):
     def is_prop(self) -> bool:
         return False
 
+    def _clear(self):
+        for n in self._stake:
+            self._stake[n] = 0.0
+            self._odds[n] = 0.0
+
     def _settle(self, roll: Roll):
         total = roll.total()
         return self._stake[total] + self._odds[total]
@@ -75,6 +80,11 @@ class DummyPropBet(Bet):
     @property
     def is_prop(self) -> bool:
         return True
+
+    def _clear(self):
+        for n in self._stake:
+            self._stake[n] = 0.0
+            self._odds[n] = 0.0
 
     def _settle(self, roll: Roll):
         total = roll.total()

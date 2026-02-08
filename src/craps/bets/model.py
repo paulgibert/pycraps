@@ -110,6 +110,16 @@ class Bet(ABC):
         """Settle the bet against the current phase. Called before phase is updated."""
         raise NotImplementedError
 
+    @abstractmethod
+    def _clear(self):
+        """Reset all wager state to zero."""
+        raise NotImplementedError
+
+    def reset(self):
+        """Reset the bet to its initial state (wagers + phase)."""
+        self._clear()
+        self._phase = TablePhase()
+
 def requires_target(allowed: Tuple[int]):
     def decorator(fn: Callable):
         def wrapper(self, *args, **kwargs):

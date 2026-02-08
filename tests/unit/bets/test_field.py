@@ -62,3 +62,11 @@ def test_get_odds_errors(phase: TablePhase):
     field = Field(phase)
     with pytest.raises(RuntimeError):
         field.get_odds()
+
+
+def test_reset_clears_stake():
+    field = Field(TablePhase(point=6))
+    field.set_stake(30.0)
+    field.reset()
+    assert field.get_stake() == 0.0
+    assert field._phase.point is None

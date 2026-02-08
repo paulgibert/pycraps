@@ -136,3 +136,17 @@ class TestSettlePointOn:
         pass_line_on_6.set_odds(60.0, target=6)
         assert pass_line_on_6.get_odds(target=4) == 0.0
         assert pass_line_on_6.get_odds(target=6) == 60.0
+
+
+class TestReset:
+    def test_reset_clears_stake_and_odds(self, pass_line_on_6: PassLine):
+        pass_line_on_6.set_odds(60.0, target=6)
+        pass_line_on_6.reset()
+        assert pass_line_on_6.get_stake() == 0.0
+        for point in [4, 5, 6, 8, 9, 10]:
+            assert pass_line_on_6.get_odds(target=point) == 0.0
+
+    def test_reset_restores_comeout_phase(self, pass_line_on_6: PassLine):
+        pass_line_on_6.reset()
+        assert pass_line_on_6._phase.point is None
+        assert pass_line_on_6.can_set_stake()
