@@ -6,6 +6,7 @@ TODO:
 [x] Add Gym.render()
 [x] Simple train run
 [x] Add a action mask
+[] The env does not appear to be moving, action['leave'] correct?
 [] Design utility reward
 [] Add all bets
 [] Add a "world" integration test

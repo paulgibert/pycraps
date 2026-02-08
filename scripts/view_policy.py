@@ -1,5 +1,5 @@
 from pprint import pprint
-from stable_baselines3 import PPO
+from sb3_contrib import MaskablePPO
 from craps.gym.env import CrapsEnv
 from craps.gym.config import CrapsEnvConfig
 from craps.gym.wrappers import FlattenActionWrapper
@@ -34,7 +34,7 @@ def main():
     # Create environment
     env = FlattenActionWrapper(CrapsEnv(env_config, table_config, bets))
 
-    model = PPO.load("model_ppo.zip")
+    model = MaskablePPO.load("model_ppo.zip")
 
     obs, _ = env.reset()
     while True:

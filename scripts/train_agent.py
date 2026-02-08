@@ -1,7 +1,7 @@
 from sb3_contrib import MaskablePPO
 from craps.gym.env import CrapsEnv
 from craps.gym.config import CrapsEnvConfig
-from craps.gym.wrappers import FlattenActionWrapper
+from craps.gym.wrappers import FlattenActionWrapper, CPTBuffer, CPTRewardWrapper
 from craps.state import TableConfig
 from craps.phase import TablePhase
 from craps.bets import PassLine, PlaceBets, Field, ComeBets
@@ -32,13 +32,16 @@ def main():
 
     # Create environment
     env = FlattenActionWrapper(CrapsEnv(env_config, table_config, bets))
-
+    
+    buffer = CPTBuffer(100)
+    env = CPTRewardWrapper(env, buffer)
+    
     # Create agent
     model = MaskablePPO("MultiInputPolicy", env, verbose=1)
 
     # Train agent
-    model.learn(500_000)
-    model.save('model_ppo')
+    model.learn(100_000)
+    model.save(f'model_ppo')
 
 if __name__ == '__main__':
     main()

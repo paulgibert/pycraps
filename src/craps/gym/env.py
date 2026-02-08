@@ -58,7 +58,7 @@ class CrapsEnv(gym.Env):
 
         # Compute outputs
         observation = self._codec.encode_observation(self._state)
-        reward = self._compute_reward()
+        reward = 0.005 # Small local reward for playing
         terminated = self._state.get_bankroll_size() <= 0.0 or action['leave'] == 1
         truncated = self._n_steps >= self._env_config.max_steps
 
