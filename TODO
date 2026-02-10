@@ -6,8 +6,8 @@ TODO:
 [x] Add Gym.render()
 [x] Simple train run
 [x] Add a action mask
-[] The env does not appear to be moving, action['leave'] correct?
-[] Design utility reward
+[x] The env does not appear to be moving, action['leave'] correct?
+[x] Design utility reward
 [] Add all bets
 [] Add a "world" integration test
 [] Add a "perfect math" integration tests
@@ -17,3 +17,4 @@ TODO:
 Stretch:
 [] Make the init method of Bet not require a TablePhase
 [] Add SpaceCodec tests below BetCodec tests
+[] Pass BetTypes into State instead of Bet(TablePhase) and then in the state __init__ pass a common TablePhase

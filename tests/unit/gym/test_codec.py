@@ -147,13 +147,13 @@ def codec(request, table_config: TableConfig) -> BetCodec:
         return BetCodec(
             table_config,
             DummyBet(TablePhase(None)),
-            min_increment=5,
+            min_bet_inc=5,
         )
     elif request.param == "prop":
         return BetCodec(
             table_config,
             DummyPropBet(TablePhase(None)),
-            min_increment=5,
+            min_bet_inc=5,
         )
     else:
         raise ValueError(request.param)

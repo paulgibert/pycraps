@@ -3,6 +3,8 @@ from dataclasses import dataclass
 @dataclass
 class CrapsEnvConfig:
     init_bankroll: float
-    max_rolls: int
-    max_steps: int
-    min_increment: int
+    max_bankroll: float
+    max_points: int
+    min_bet_inc: int
+    entertainment_cost: float = 0.0
+    illegal_action_penalty: float = 0.01

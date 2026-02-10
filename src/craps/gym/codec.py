@@ -22,11 +22,11 @@ class BetCodec:
         N -> minimum + (N-1) * increment
 
     The effective increment is the smallest multiple of the bet's natural
-    increment that is >= min_increment. This ensures:
+    increment that is >= min_bet_inc. This ensures:
         1. Even payouts (always aligned with bet's natural increment)
-        2. Manageable action space size (at least min_increment apart)
+        2. Manageable action space size (at least min_bet_inc apart)
 
-    Example with min_increment=5:
+    Example with min_bet_inc=5:
         - PassLine stake (increment=1): effective=5
         - PlaceBets on 6 (increment=6): effective=6
         - PlaceBets on 5 (increment=5): effective=5
@@ -35,16 +35,16 @@ class BetCodec:
     Args:
         config: Table configuration with min/max bet limits.
         bet: The bet instance to encode/decode for.
-        min_increment: Minimum spacing between discrete values. The effective
+        min_bet_inc: Minimum spacing between discrete values. The effective
             increment will be the smallest multiple of the bet's natural
             increment that is >= this value. Default is 1 (use bet's natural
             increment).
     """
 
-    def __init__(self, config: TableConfig, bet: Bet, min_increment: int = 1):
+    def __init__(self, config: TableConfig, bet: Bet, min_bet_inc: int = 1):
         self.config = config
         self.bet = bet
-        self.min_increment = min_increment
+        self.min_increment = min_bet_inc
 
     def _get_raw_min(self) -> float:
         """Return the raw minimum bet amount based on whether this is a prop bet."""
@@ -61,7 +61,7 @@ class BetCodec:
         return ceil(self._get_raw_min() / increment) * increment
 
     def _get_stake_increment(self, target: Optional[int] = None) -> int:
-        """Return the effective stake increment (>= min_increment, aligned with bet)."""
+        """Return the effective stake increment (>= min_bet_inc, aligned with bet)."""
         bet_increment = self.bet.get_stake_increment(target=target)
         return ceil(self.min_increment / bet_increment) * bet_increment
 
@@ -138,8 +138,8 @@ class SpaceCodec:
         table_config: Table configuration with bet limits.
         bets: Dictionary of bet name to Bet instance.
         init_bankroll: Starting bankroll for observation encoding.
-        max_rolls: Maximum rolls for observation encoding.
-        min_increment: Minimum spacing between discrete bet values.
+        max_points: Maximum point rounds for observation encoding.
+        min_bet_inc: Minimum spacing between discrete bet values.
     """
 
     def __init__(
@@ -147,18 +147,18 @@ class SpaceCodec:
         table_config: TableConfig,
         bets: Dict[str, Bet],
         init_bankroll: float,
-        max_rolls: int,
-        min_increment: int = 1
+        max_points: int,
+        min_bet_inc: int = 1
     ):
         self._table_config = table_config
         self._bets = bets
         self._init_bankroll = init_bankroll
-        self._max_rolls = max_rolls
-        self._min_increment = min_increment
+        self._max_points = max_points
+        self._min_bet_inc = min_bet_inc
 
         # Pre-build codecs for each bet
         self._codecs = {
-            name: BetCodec(table_config, bet, min_increment)
+            name: BetCodec(table_config, bet, min_bet_inc)
             for name, bet in bets.items()
         }
 
@@ -175,7 +175,7 @@ class SpaceCodec:
         return self._observation_space
 
     def _build_action_space(self) -> spaces.Dict:
-        actions = {'leave': spaces.Discrete(2)}
+        actions = {}
 
         for name, bet in self._bets.items():
             codec = self._codecs[name]
@@ -195,7 +195,7 @@ class SpaceCodec:
             'bankroll': spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32),
             'point': spaces.Discrete(7),
             'last_roll': spaces.MultiDiscrete([7, 7, 12]),
-            'roll_count': spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32),
+            'points_played': spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32),
         }
 
         for name, bet in self._bets.items():
@@ -218,12 +218,9 @@ class SpaceCodec:
         Discrete(N)). Index 0 ($0 / no bet) is always valid. Other indices
         are valid only if the bet is currently accepting wagers.
         """
-        masks = {'leave': np.ones(2, dtype=np.int8)}
+        masks = {}
 
         for key in self._action_space.spaces:
-            if key == 'leave':
-                continue
-
             bet_type, bet_name, target_str = key.split('-')
             target = None if target_str == 'None' else int(target_str)
             bet = state.bets[bet_name]
@@ -251,9 +248,6 @@ class SpaceCodec:
             'stake' or 'odds'.
         """
         for key, x in action.items():
-            if key == 'leave':
-                continue
-
             parts = key.split('-')
             bet_type, bet_name, target_str = parts[0], parts[1], parts[2]
             target = None if target_str == 'None' else int(target_str)
@@ -265,13 +259,13 @@ class SpaceCodec:
                 amount = self._codecs[bet_name].odds_discrete_to_amount(x, target=target)
                 yield bet_name, 'odds', amount, target
 
-    def encode_observation(self, state: TableState) -> Dict[str, Any]:
+    def encode_observation(self, state: TableState, n_points: int = 0) -> Dict[str, Any]:
         """Encode the table state into a gym observation dict."""
         obs = {
             'bankroll': self._encode_bankroll(state.get_bankroll_size()),
             'point': self._encode_point(state.get_phase().point),
             'last_roll': self._encode_last_roll(state.get_last_roll()),
-            'roll_count': self._encode_roll_count(state.get_roll_count()),
+            'points_played': self._encode_points_played(n_points),
         }
 
         # Encode bet stakes and odds
@@ -310,6 +304,6 @@ class SpaceCodec:
             return np.array([0, 0, 0], dtype=np.int64)
         return np.array([last_roll[0], last_roll[1], last_roll.total() - 1], dtype=np.int64)
 
-    def _encode_roll_count(self, roll_count: int) -> np.ndarray:
-        frac_remaining = 1.0 - roll_count / self._max_rolls
+    def _encode_points_played(self, n_points: int) -> np.ndarray:
+        frac_remaining = 1.0 - n_points / self._max_points
         return np.array([np.tanh(2.0 * frac_remaining - 1.0)], dtype=np.float32)

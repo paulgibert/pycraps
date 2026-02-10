@@ -25,8 +25,8 @@ class CrapsEnv(gym.Env):
             table_config=table_config,
             bets=bets,
             init_bankroll=env_config.init_bankroll,
-            max_rolls=env_config.max_rolls,
-            min_increment=env_config.min_increment
+            max_points=env_config.max_points,
+            min_bet_inc=env_config.min_bet_inc
         )
 
         self.action_space = self._codec.action_space
@@ -37,40 +37,50 @@ class CrapsEnv(gym.Env):
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> Tuple[Any, Dict]:
         super().reset(seed=seed)
         self._n_steps = 0
-        self._prev_bankroll = self._env_config.init_bankroll
+        self._n_points = 0
         for bet in self._bets.values():
             bet.reset()
         self._state = TableState(self._table_config, self._bets, self._env_config.init_bankroll)
-        return self._codec.encode_observation(self._state), {}
+        return self._codec.encode_observation(self._state, n_points=self._n_points), {}
 
     def step(self, action: Any) -> Tuple[Any, float, bool, bool, Dict[str, Any]]:
         # Apply bets to table state
-        prev_state = deepcopy(self._state)
+        reward = 0.0
+        illegal_action = False
         try:
             self._apply_action(action)
         except (IllegalAction, InsufficientFunds):
-            # TODO: Consider different feedback based on the error type
-            self._state = prev_state
-            self._n_steps += 1
-            return self._codec.encode_observation(self._state), -0.1, False, False, {}
-        
+            reward -= self._env_config.illegal_action_penalty
+            illegal_action = True
+
+        # Capture phase before roll for point tracking
+        prev_phase = self._state.get_phase()
+
         # Roll and progress the table state
         roll = self._random_roll()
         self._state.step(roll)
 
+        # Track completed point rounds
+        new_phase = self._state.get_phase()
+        if prev_phase.point is not None and new_phase.point is None:
+            self._n_points += 1
+
         # Compute outputs
-        observation = self._codec.encode_observation(self._state)
-        reward = 0.005 # Small local reward for playing
-        terminated = self._state.get_bankroll_size() <= 0.0 or action['leave'] == 1
-        truncated = self._n_steps >= self._env_config.max_steps
+        bankroll = self._state.get_bankroll_size()
+        observation = self._codec.encode_observation(self._state, n_points=self._n_points)
+        terminated = bankroll <= 0.0 or bankroll >= self._env_config.max_bankroll
+        truncated = (not terminated) and self._n_points >= self._env_config.max_points
 
         self._n_steps += 1
-        self._prev_bankroll = self._state.get_bankroll_size()
 
-        info = {}
+        info = {
+            "illegal_action": illegal_action,
+            "n_points": self._n_points,
+        }
         if terminated or truncated:
-            info["terminal_bankroll"] = self._state.get_bankroll_size()
-        
+            info["terminal_bankroll"] = bankroll
+            info["total_steps"] = self._n_steps
+
         return observation, reward, terminated, truncated, info
 
     def action_masks(self) -> Dict[str, np.ndarray]:
@@ -87,7 +97,7 @@ class CrapsEnv(gym.Env):
         snap["observation"] = {}
         for name, bet in self._state.bets.items():
             snap["observation"].update(snapshot_bet_observation(name, bet))
-        
+
         snap["action"] = {}
         for name, bet in self._state.bets.items():
             snap["action"].update(snapshot_bet_action(name, bet))
@@ -100,11 +110,6 @@ class CrapsEnv(gym.Env):
                 self._state.set_bet_stake(bet_name, amount, target=target)
             else:
                 self._state.set_bet_odds(bet_name, amount, target=target)
-
-    def _compute_reward(self) -> float:
-        # TODO: This is just a placeholder
-        eps = 1e-6
-        return float(np.log((self._state.get_bankroll_size() + eps) / (self._prev_bankroll + eps)))
 
     def _random_roll(self) -> Roll:
         dice1 = self.np_random.integers(1, 7)
